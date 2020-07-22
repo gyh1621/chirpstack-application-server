@@ -10,11 +10,11 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-api/go/v3/ns"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver"
-	"github.com/brocaar/chirpstack-application-server/internal/config"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
 	"github.com/brocaar/lorawan"
+	"github.com/gyh1621/chirpstack-api/go/v3/ns"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver"
+	"github.com/gyh1621/chirpstack-application-server/internal/config"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
 )
 
 // MigrateGatewayStats imports the gateway stats from the network-server.

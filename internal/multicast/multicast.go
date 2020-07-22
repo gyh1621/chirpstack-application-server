@@ -8,11 +8,11 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
-	api "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
-	"github.com/brocaar/chirpstack-api/go/v3/ns"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
 	"github.com/brocaar/lorawan"
+	api "github.com/gyh1621/chirpstack-api/go/v3/as/external/api"
+	"github.com/gyh1621/chirpstack-api/go/v3/ns"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
 )
 
 // Enqueue adds the given payload to the multicast-group queue.

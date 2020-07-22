@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	uuid "github.com/gofrs/uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver/mock"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver/mock"
 )
 
 func (ts *StorageTestSuite) TestAPIKey() {

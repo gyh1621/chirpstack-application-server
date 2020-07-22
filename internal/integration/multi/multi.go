@@ -8,9 +8,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	pb "github.com/brocaar/chirpstack-api/go/v3/as/integration"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/models"
-	"github.com/brocaar/chirpstack-application-server/internal/logging"
+	pb "github.com/gyh1621/chirpstack-api/go/v3/as/integration"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/models"
+	"github.com/gyh1621/chirpstack-application-server/internal/logging"
 )
 
 // Integration implements the multi integration.

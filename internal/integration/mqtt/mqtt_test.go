@@ -11,13 +11,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	pb "github.com/brocaar/chirpstack-api/go/v3/as/integration"
-	"github.com/brocaar/chirpstack-application-server/internal/config"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/marshaler"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/models"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
-	"github.com/brocaar/chirpstack-application-server/internal/test"
 	"github.com/brocaar/lorawan"
+	pb "github.com/gyh1621/chirpstack-api/go/v3/as/integration"
+	"github.com/gyh1621/chirpstack-application-server/internal/config"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/marshaler"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/models"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
+	"github.com/gyh1621/chirpstack-application-server/internal/test"
 )
 
 type MQTTHandlerTestSuite struct {

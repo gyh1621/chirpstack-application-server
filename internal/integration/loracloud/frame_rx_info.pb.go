@@ -5,7 +5,7 @@ package loracloud
 
 import (
 	fmt "fmt"
-	gw "github.com/brocaar/chirpstack-api/go/v3/gw"
+	gw "github.com/gyh1621/chirpstack-api/go/v3/gw"
 	proto "github.com/golang/protobuf/proto"
 	math "math"
 )

@@ -11,10 +11,10 @@ import (
 	"github.com/lib/pq/hstore"
 	"github.com/stretchr/testify/require"
 
-	"github.com/brocaar/chirpstack-api/go/v3/ns"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver/mock"
 	"github.com/brocaar/lorawan/band"
+	"github.com/gyh1621/chirpstack-api/go/v3/ns"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver/mock"
 )
 
 func TestDeviceProfileValidate(t *testing.T) {
@@ -91,7 +91,7 @@ func (ts *StorageTestSuite) TestDeviceProfile() {
 			PayloadDecoderScript: "Decode() {}",
 			Tags: hstore.Hstore{
 				Map: map[string]sql.NullString{
-					"foo": sql.NullString{Valid: true, String: "bar"},
+					"foo": {Valid: true, String: "bar"},
 				},
 			},
 			DeviceProfile: ns.DeviceProfile{

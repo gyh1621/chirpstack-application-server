@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	lsyslog "github.com/sirupsen/logrus/hooks/syslog"
 
-	"github.com/brocaar/chirpstack-application-server/internal/config"
+	"github.com/gyh1621/chirpstack-application-server/internal/config"
 )
 
 func setSyslog() error {

@@ -9,10 +9,10 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/require"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
-	"github.com/brocaar/chirpstack-application-server/internal/test"
 	"github.com/brocaar/lorawan"
+	"github.com/gyh1621/chirpstack-api/go/v3/gw"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
+	"github.com/gyh1621/chirpstack-application-server/internal/test"
 )
 
 func TestGeolocBuffer(t *testing.T) {

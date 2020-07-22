@@ -5,8 +5,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
+	"github.com/gyh1621/chirpstack-api/go/v3/common"
+	"github.com/gyh1621/chirpstack-api/go/v3/gw"
 )
 
 // getTimeSinceGPSEpoch returns the time since GPS epoch if it is available

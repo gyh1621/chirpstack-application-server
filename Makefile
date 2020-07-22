@@ -59,7 +59,7 @@ internal/statics internal/migrations: static/swagger/api.swagger.json
 static/swagger/api.swagger.json:
 	@echo "Fetching Swagger definitions and generate combined Swagger JSON"
 	@rm -rf /tmp/chirpstack-api
-	@git clone https://github.com/brocaar/chirpstack-api.git /tmp/chirpstack-api
+	@git clone https://github.com/gyh1621/chirpstack-api.git /tmp/chirpstack-api
 	@git --git-dir=/tmp/chirpstack-api/.git --work-tree=/tmp/chirpstack-api checkout $(API_VERSION)
 	@mkdir -p static/swagger
 	@cp /tmp/chirpstack-api/swagger/as/external/api/*.json static/swagger

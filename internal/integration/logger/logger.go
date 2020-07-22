@@ -7,11 +7,11 @@ import (
 	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
 
-	pb "github.com/brocaar/chirpstack-api/go/v3/as/integration"
-	"github.com/brocaar/chirpstack-application-server/internal/eventlog"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/models"
-	"github.com/brocaar/chirpstack-application-server/internal/logging"
 	"github.com/brocaar/lorawan"
+	pb "github.com/gyh1621/chirpstack-api/go/v3/as/integration"
+	"github.com/gyh1621/chirpstack-application-server/internal/eventlog"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/models"
+	"github.com/gyh1621/chirpstack-application-server/internal/logging"
 )
 
 // Config contains the logger configuration.

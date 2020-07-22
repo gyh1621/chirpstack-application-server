@@ -17,13 +17,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	pb "github.com/brocaar/chirpstack-api/go/v3/as/integration"
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
-	"github.com/brocaar/chirpstack-application-server/internal/config"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
-	"github.com/brocaar/chirpstack-application-server/internal/test"
 	"github.com/brocaar/lorawan"
+	pb "github.com/gyh1621/chirpstack-api/go/v3/as/integration"
+	"github.com/gyh1621/chirpstack-api/go/v3/common"
+	"github.com/gyh1621/chirpstack-api/go/v3/gw"
+	"github.com/gyh1621/chirpstack-application-server/internal/config"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
+	"github.com/gyh1621/chirpstack-application-server/internal/test"
 )
 
 type deviceUp struct {
@@ -362,7 +362,7 @@ func (ts *PostgreSQLTestSuite) TestHandleUplinkEvent() {
 		Data:            []byte{1, 2, 3, 4},
 		Tags: hstore.Hstore{
 			Map: map[string]sql.NullString{
-				"foo": sql.NullString{String: "bar", Valid: true},
+				"foo": {String: "bar", Valid: true},
 			},
 		},
 	}, up)
@@ -429,7 +429,7 @@ func (ts *PostgreSQLTestSuite) TestHandleUplinkEventNoObject() {
 		Object:          json.RawMessage("null"),
 		Tags: hstore.Hstore{
 			Map: map[string]sql.NullString{
-				"foo": sql.NullString{String: "bar", Valid: true},
+				"foo": {String: "bar", Valid: true},
 			},
 		},
 	}, up)
@@ -495,7 +495,7 @@ func (ts *PostgreSQLTestSuite) TestUplinkEventNoData() {
 		Object:          json.RawMessage("null"),
 		Tags: hstore.Hstore{
 			Map: map[string]sql.NullString{
-				"foo": sql.NullString{String: "bar", Valid: true},
+				"foo": {String: "bar", Valid: true},
 			},
 		},
 	}, up)
@@ -543,7 +543,7 @@ func (ts *PostgreSQLTestSuite) TestHandleStatusEvent() {
 		BatteryLevel:            75.5,
 		Tags: hstore.Hstore{
 			Map: map[string]sql.NullString{
-				"foo": sql.NullString{String: "bar", Valid: true},
+				"foo": {String: "bar", Valid: true},
 			},
 		},
 	}, status)
@@ -586,7 +586,7 @@ func (ts *PostgreSQLTestSuite) TestHandleJoinEvent() {
 		DevAddr:         lorawan.DevAddr{1, 2, 3, 4},
 		Tags: hstore.Hstore{
 			Map: map[string]sql.NullString{
-				"foo": sql.NullString{String: "bar", Valid: true},
+				"foo": {String: "bar", Valid: true},
 			},
 		},
 	}, join)
@@ -630,7 +630,7 @@ func (ts *PostgreSQLTestSuite) TestHandleAckEvent() {
 		FCnt:            10,
 		Tags: hstore.Hstore{
 			Map: map[string]sql.NullString{
-				"foo": sql.NullString{String: "bar", Valid: true},
+				"foo": {String: "bar", Valid: true},
 			},
 		},
 	}, ack)
@@ -676,7 +676,7 @@ func (ts *PostgreSQLTestSuite) TestHandleErrorEvent() {
 		FCnt:            10,
 		Tags: hstore.Hstore{
 			Map: map[string]sql.NullString{
-				"foo": sql.NullString{String: "bar", Valid: true},
+				"foo": {String: "bar", Valid: true},
 			},
 		},
 	}, e)
@@ -725,7 +725,7 @@ func (ts *PostgreSQLTestSuite) TestLocationEvent() {
 		Geohash:         "s06hp46p75vs",
 		Tags: hstore.Hstore{
 			Map: map[string]sql.NullString{
-				"foo": sql.NullString{String: "bar", Valid: true},
+				"foo": {String: "bar", Valid: true},
 			},
 		},
 	}, loc)

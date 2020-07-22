@@ -5,7 +5,7 @@ package cmd
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-application-server/internal/config"
+	"github.com/gyh1621/chirpstack-application-server/internal/config"
 )
 
 func setSyslog() error {

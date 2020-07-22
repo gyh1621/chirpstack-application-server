@@ -12,14 +12,14 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"golang.org/x/net/context"
 
-	"github.com/brocaar/chirpstack-api/go/v3/ns"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver/mock"
-	"github.com/brocaar/chirpstack-application-server/internal/codec"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/models"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
-	"github.com/brocaar/chirpstack-application-server/internal/test"
 	"github.com/brocaar/lorawan"
+	"github.com/gyh1621/chirpstack-api/go/v3/ns"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver/mock"
+	"github.com/gyh1621/chirpstack-application-server/internal/codec"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/models"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
+	"github.com/gyh1621/chirpstack-application-server/internal/test"
 )
 
 func TestHandleDownlinkQueueItem(t *testing.T) {
@@ -80,12 +80,12 @@ func TestHandleDownlinkQueueItem(t *testing.T) {
 			DevEUI:          [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 			Tags: hstore.Hstore{
 				Map: map[string]sql.NullString{
-					"foo": sql.NullString{String: "bar", Valid: true},
+					"foo": {String: "bar", Valid: true},
 				},
 			},
 			Variables: hstore.Hstore{
 				Map: map[string]sql.NullString{
-					"secret_token": sql.NullString{String: "secret value", Valid: true},
+					"secret_token": {String: "secret value", Valid: true},
 				},
 			},
 			DevAddr: lorawan.DevAddr{0x01, 0x02, 0x03, 0x04},

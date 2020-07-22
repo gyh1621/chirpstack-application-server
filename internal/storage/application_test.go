@@ -8,10 +8,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/brocaar/chirpstack-api/go/v3/ns"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver/mock"
-	"github.com/brocaar/chirpstack-application-server/internal/test"
+	"github.com/gyh1621/chirpstack-api/go/v3/ns"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver/mock"
+	"github.com/gyh1621/chirpstack-application-server/internal/test"
 )
 
 func (ts *StorageTestSuite) TestApplication() {

@@ -12,10 +12,10 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-api/go/v3/as/integration"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/models"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
 	"github.com/brocaar/lorawan"
+	"github.com/gyh1621/chirpstack-api/go/v3/as/integration"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/models"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
 )
 
 // Type defines the marshaler type.

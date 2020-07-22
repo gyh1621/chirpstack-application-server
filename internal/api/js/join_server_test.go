@@ -13,15 +13,15 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver"
-	nsmock "github.com/brocaar/chirpstack-application-server/internal/backend/networkserver/mock"
-	"github.com/brocaar/chirpstack-application-server/internal/config"
-	"github.com/brocaar/chirpstack-application-server/internal/integration"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/mock"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
-	"github.com/brocaar/chirpstack-application-server/internal/test"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/backend"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver"
+	nsmock "github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver/mock"
+	"github.com/gyh1621/chirpstack-application-server/internal/config"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/mock"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
+	"github.com/gyh1621/chirpstack-application-server/internal/test"
 )
 
 func TestJoinServerAPI(t *testing.T) {

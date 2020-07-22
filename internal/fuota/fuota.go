@@ -12,14 +12,14 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-api/go/v3/ns"
-	"github.com/brocaar/chirpstack-application-server/internal/config"
-	"github.com/brocaar/chirpstack-application-server/internal/logging"
-	"github.com/brocaar/chirpstack-application-server/internal/multicast"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/applayer/fragmentation"
 	"github.com/brocaar/lorawan/applayer/multicastsetup"
+	"github.com/gyh1621/chirpstack-api/go/v3/ns"
+	"github.com/gyh1621/chirpstack-application-server/internal/config"
+	"github.com/gyh1621/chirpstack-application-server/internal/logging"
+	"github.com/gyh1621/chirpstack-application-server/internal/multicast"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
 )
 
 var (
@@ -296,7 +296,7 @@ func stepFragmentationSessSetup(ctx context.Context, db sqlx.Ext, item storage.F
 	}
 
 	padding := (item.FragSize - (len(item.Payload) % item.FragSize)) % item.FragSize
-	nbFrag := ((len(item.Payload) + padding) / item.FragSize)
+	nbFrag := (len(item.Payload) + padding) / item.FragSize
 
 	for _, devEUI := range devEUIs {
 		// delete existing fragmentation session if it exist

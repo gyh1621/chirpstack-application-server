@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/brocaar/chirpstack-application-server/internal/config"
 	"github.com/go-redis/redis/v7"
+	"github.com/gyh1621/chirpstack-application-server/internal/config"
 	"github.com/spf13/viper"
 
 	log "github.com/sirupsen/logrus"
@@ -24,7 +24,7 @@ var rootCmd = &cobra.Command{
 	Short: "ChirpStack Application Server",
 	Long: `ChirpStack Application Server is an open-source Application Server, part of the ChirpStack LoRaWAN Network Server stack.
 	> documentation & support: https://www.chirpstack.io/application-server
-	> source & copyright information: https://github.com/brocaar/chirpstack-application-server`,
+	> source & copyright information: https://github.com/gyh1621/chirpstack-application-server`,
 	RunE: run,
 }
 

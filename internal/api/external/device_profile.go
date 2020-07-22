@@ -8,18 +8,18 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lib/pq/hstore"
 
-	"github.com/brocaar/chirpstack-api/go/v3/ns"
+	"github.com/gyh1621/chirpstack-api/go/v3/ns"
 
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	pb "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
-	"github.com/brocaar/chirpstack-application-server/internal/api/external/auth"
-	"github.com/brocaar/chirpstack-application-server/internal/api/helpers"
-	"github.com/brocaar/chirpstack-application-server/internal/codec"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
+	pb "github.com/gyh1621/chirpstack-api/go/v3/as/external/api"
+	"github.com/gyh1621/chirpstack-application-server/internal/api/external/auth"
+	"github.com/gyh1621/chirpstack-application-server/internal/api/helpers"
+	"github.com/gyh1621/chirpstack-application-server/internal/codec"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
 )
 
 // DeviceProfileServiceAPI exports the ServiceProfile related functions.

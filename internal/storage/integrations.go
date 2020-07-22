@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-application-server/internal/logging"
+	"github.com/gyh1621/chirpstack-application-server/internal/logging"
 )
 
 // Integration represents an integration.

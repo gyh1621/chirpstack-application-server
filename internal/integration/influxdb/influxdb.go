@@ -19,10 +19,10 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	pb "github.com/brocaar/chirpstack-api/go/v3/as/integration"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/models"
-	"github.com/brocaar/chirpstack-application-server/internal/logging"
 	"github.com/brocaar/lorawan"
+	pb "github.com/gyh1621/chirpstack-api/go/v3/as/integration"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/models"
+	"github.com/gyh1621/chirpstack-application-server/internal/logging"
 )
 
 var precisionValidator = regexp.MustCompile(`^(ns|u|ms|s|m|h)$`)
@@ -358,8 +358,8 @@ func objectToMeasurements(pl pb.UplinkEvent, prefix string, obj interface{}) []m
 			for _, k := range keys {
 				keyName := fmt.Sprintf("%v", k.Interface())
 				if _, ignore := map[string]struct{}{
-					"latitude":  struct{}{},
-					"longitude": struct{}{},
+					"latitude":  {},
+					"longitude": {},
 				}[keyName]; ignore {
 					continue
 				}
@@ -384,8 +384,8 @@ func objectToMeasurements(pl pb.UplinkEvent, prefix string, obj interface{}) []m
 				}
 
 				if _, ignore := map[string]struct{}{
-					"latitude":  struct{}{},
-					"longitude": struct{}{},
+					"latitude":  {},
+					"longitude": {},
 				}[fieldName]; ignore {
 					continue
 				}

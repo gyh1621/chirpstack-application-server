@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-application-server/internal/config"
+	"github.com/gyh1621/chirpstack-application-server/internal/config"
 )
 
 // Setup setsup the metrics server.

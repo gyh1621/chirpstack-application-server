@@ -12,19 +12,19 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/brocaar/chirpstack-api/go/v3/as"
-	pb "github.com/brocaar/chirpstack-api/go/v3/as/integration"
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	gwPB "github.com/brocaar/chirpstack-api/go/v3/gw"
-	"github.com/brocaar/chirpstack-api/go/v3/ns"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver"
-	nsmock "github.com/brocaar/chirpstack-application-server/internal/backend/networkserver/mock"
-	"github.com/brocaar/chirpstack-application-server/internal/codec"
-	"github.com/brocaar/chirpstack-application-server/internal/integration"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/mock"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
-	"github.com/brocaar/chirpstack-application-server/internal/test"
 	"github.com/brocaar/lorawan"
+	"github.com/gyh1621/chirpstack-api/go/v3/as"
+	pb "github.com/gyh1621/chirpstack-api/go/v3/as/integration"
+	"github.com/gyh1621/chirpstack-api/go/v3/common"
+	gwPB "github.com/gyh1621/chirpstack-api/go/v3/gw"
+	"github.com/gyh1621/chirpstack-api/go/v3/ns"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver"
+	nsmock "github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver/mock"
+	"github.com/gyh1621/chirpstack-application-server/internal/codec"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/mock"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
+	"github.com/gyh1621/chirpstack-application-server/internal/test"
 )
 
 type ASTestSuite struct {
@@ -93,12 +93,12 @@ func (ts *ASTestSuite) TestApplicationServer() {
 		DeviceProfileID: dpID,
 		Tags: hstore.Hstore{
 			Map: map[string]sql.NullString{
-				"foo": sql.NullString{String: "bar", Valid: true},
+				"foo": {String: "bar", Valid: true},
 			},
 		},
 		Variables: hstore.Hstore{
 			Map: map[string]sql.NullString{
-				"secret_token": sql.NullString{String: "secret value", Valid: true},
+				"secret_token": {String: "secret value", Valid: true},
 			},
 		},
 	}
@@ -383,7 +383,7 @@ func (ts *ASTestSuite) TestApplicationServer() {
 
 		assert.Equal(hstore.Hstore{
 			Map: map[string]sql.NullString{
-				"foo": sql.NullString{Valid: true, String: "bar"},
+				"foo": {Valid: true, String: "bar"},
 			},
 		}, gw.Metadata)
 	})

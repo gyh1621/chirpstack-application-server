@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	uuid "github.com/gofrs/uuid"
+	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-application-server/internal/logging"
 	"github.com/brocaar/lorawan"
+	"github.com/gyh1621/chirpstack-application-server/internal/logging"
 )
 
 // FUOTADeploymentState defines the fuota deployment state.

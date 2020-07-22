@@ -8,7 +8,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
+	"github.com/gyh1621/chirpstack-api/go/v3/gw"
 )
 
 // HEXBytes defines a type which represents bytes as HEX when marshaled to

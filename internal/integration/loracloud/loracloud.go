@@ -10,17 +10,17 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-api/go/v3/as/integration"
-	pb "github.com/brocaar/chirpstack-api/go/v3/as/integration"
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	gw "github.com/brocaar/chirpstack-api/go/v3/gw"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/loracloud/client/das"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/loracloud/client/geolocation"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/loracloud/client/helpers"
-	"github.com/brocaar/chirpstack-application-server/internal/integration/models"
-	"github.com/brocaar/chirpstack-application-server/internal/logging"
-	"github.com/brocaar/chirpstack-application-server/internal/storage"
 	"github.com/brocaar/lorawan"
+	"github.com/gyh1621/chirpstack-api/go/v3/as/integration"
+	pb "github.com/gyh1621/chirpstack-api/go/v3/as/integration"
+	"github.com/gyh1621/chirpstack-api/go/v3/common"
+	gw "github.com/gyh1621/chirpstack-api/go/v3/gw"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/loracloud/client/das"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/loracloud/client/geolocation"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/loracloud/client/helpers"
+	"github.com/gyh1621/chirpstack-application-server/internal/integration/models"
+	"github.com/gyh1621/chirpstack-application-server/internal/logging"
+	"github.com/gyh1621/chirpstack-application-server/internal/storage"
 )
 
 // Config contains the LoRaCloud integration configuration.

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/brocaar/chirpstack-application-server/internal/config"
+	"github.com/gyh1621/chirpstack-application-server/internal/config"
 	"github.com/pkg/errors"
 	"github.com/robertkrimen/otto"
 )

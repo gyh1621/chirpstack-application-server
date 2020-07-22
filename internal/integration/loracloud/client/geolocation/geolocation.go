@@ -12,8 +12,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
+	"github.com/gyh1621/chirpstack-api/go/v3/common"
+	"github.com/gyh1621/chirpstack-api/go/v3/gw"
 )
 
 const (

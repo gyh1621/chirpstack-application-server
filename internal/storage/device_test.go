@@ -10,11 +10,11 @@ import (
 	"github.com/lib/pq/hstore"
 	"github.com/stretchr/testify/require"
 
-	"github.com/brocaar/chirpstack-api/go/v3/ns"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver"
-	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver/mock"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
+	"github.com/gyh1621/chirpstack-api/go/v3/ns"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver"
+	"github.com/gyh1621/chirpstack-application-server/internal/backend/networkserver/mock"
 )
 
 func (ts *StorageTestSuite) TestDevice() {
@@ -118,12 +118,12 @@ func (ts *StorageTestSuite) TestDevice() {
 			ReferenceAltitude:   5.6,
 			Variables: hstore.Hstore{
 				Map: map[string]sql.NullString{
-					"var_1": sql.NullString{String: "test value", Valid: true},
+					"var_1": {String: "test value", Valid: true},
 				},
 			},
 			Tags: hstore.Hstore{
 				Map: map[string]sql.NullString{
-					"foo": sql.NullString{String: "bar", Valid: true},
+					"foo": {String: "bar", Valid: true},
 				},
 			},
 			IsDisabled: true,
@@ -186,7 +186,7 @@ func (ts *StorageTestSuite) TestDevice() {
 
 			devices, err := GetDevices(context.Background(), ts.Tx(), DeviceFilters{Limit: 10, Tags: hstore.Hstore{
 				Map: map[string]sql.NullString{
-					"foo": sql.NullString{String: "bar", Valid: true},
+					"foo": {String: "bar", Valid: true},
 				},
 			}})
 			assert.NoError(err)
@@ -194,7 +194,7 @@ func (ts *StorageTestSuite) TestDevice() {
 
 			devices, err = GetDevices(context.Background(), ts.Tx(), DeviceFilters{Limit: 10, Tags: hstore.Hstore{
 				Map: map[string]sql.NullString{
-					"foo": sql.NullString{String: "bas", Valid: true},
+					"foo": {String: "bas", Valid: true},
 				},
 			}})
 			assert.NoError(err)

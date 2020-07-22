@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/brocaar/chirpstack-application-server/internal/test"
+	"github.com/gyh1621/chirpstack-application-server/internal/test"
 )
 
 type ChannelPoolTestSuite struct {
