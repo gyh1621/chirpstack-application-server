@@ -137,28 +137,6 @@ class MulticastGroupForm extends FormComponent {
           required
           random
         />
-        <AESKeyField
-          id="mcNwkSKey"
-          label="Multicast network session key"
-          margin="normal"
-          value={this.state.object.mcNwkSKey || ""}
-          onChange={this.onChange}
-          disabled={this.props.disabled}
-          fullWidth
-          required
-          random
-        />
-        <AESKeyField
-          id="mcAppSKey"
-          label="Multicast application session key"
-          margin="normal"
-          value={this.state.object.mcAppSKey || ""}
-          onChange={this.onChange}
-          disabled={this.props.disabled}
-          fullWidth
-          required
-          random
-        />
         <TextField
           id="fCnt"
           label="Frame-counter"

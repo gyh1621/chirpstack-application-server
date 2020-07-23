@@ -143,6 +143,16 @@ func handleMcGroupSetupAns(ctx context.Context, db sqlx.Ext, devEUI lorawan.EUI6
 		return errors.Wrap(err, "update remote multicast-setup error")
 	}
 
+	// Add Device To MulticastGroup
+	if err = storage.Transaction(func(tx sqlx.Ext) error {
+		if err = storage.AddDeviceToMulticastGroup(ctx, tx, rms.MulticastGroupID, devEUI); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -86,8 +86,6 @@ func (ts *APITestSuite) TestMulticastGroup() {
 			MulticastGroup: &pb.MulticastGroup{
 				Name:             "test-mg",
 				McAddr:           "01020304",
-				McNwkSKey:        "01020304050607080102030405060708",
-				McAppSKey:        "08070605040302010807060504030201",
 				FCnt:             10,
 				GroupType:        pb.MulticastGroupType_CLASS_B,
 				Dr:               5,
@@ -349,8 +347,6 @@ func (ts *APITestSuite) TestMulticastGroup() {
 					Id:               createResp.Id,
 					Name:             "test-mg-updated",
 					McAddr:           "04030201",
-					McAppSKey:        "01020304050607080102030405060708",
-					McNwkSKey:        "08070605040302010807060504030201",
 					FCnt:             11,
 					GroupType:        pb.MulticastGroupType_CLASS_C,
 					Dr:               4,

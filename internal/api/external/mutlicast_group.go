@@ -1,13 +1,18 @@
 package external
 
 import (
+	"crypto/aes"
+	"crypto/rand"
+	"github.com/brocaar/lorawan/applayer/multicastsetup"
 	"github.com/gofrs/uuid"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jmoiron/sqlx"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"time"
 
 	"github.com/brocaar/lorawan"
 	pb "github.com/gyh1621/chirpstack-api/go/v3/as/external/api"
@@ -55,21 +60,30 @@ func (a *MulticastGroupAPI) Create(ctx context.Context, req *pb.CreateMulticastG
 	}
 
 	var mcAddr lorawan.DevAddr
-	if err = mcAddr.UnmarshalText([]byte(req.MulticastGroup.McAddr)); err != nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, "mc_app_s_key: %s", err)
+	err = mcAddr.UnmarshalText([]byte(req.MulticastGroup.McAddr))
+	if err != nil || len(req.MulticastGroup.McAddr) == 0 {
+		if _, err1 := rand.Read(mcAddr[:]); err1 != nil {
+			return nil, grpc.Errorf(codes.Unknown, "read random bytes error")
+		}
 	}
 
-	var mcNwkSKey lorawan.AES128Key
-	if err = mcNwkSKey.UnmarshalText([]byte(req.MulticastGroup.McNwkSKey)); err != nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, "mc_net_s_key: %s", err)
+	var mcKey lorawan.AES128Key
+	if _, err := rand.Read(mcKey[:]); err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "get mcKey error")
+	}
+
+	mcNetSKey, err := multicastsetup.GetMcNetSKey(mcKey, mcAddr)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Unknown, "get McNetSKey error")
 	}
 
 	mg := storage.MulticastGroup{
 		Name:             req.MulticastGroup.Name,
 		ServiceProfileID: spID,
+		MCKey:            mcKey,
 		MulticastGroup: ns.MulticastGroup{
 			McAddr:           mcAddr[:],
-			McNwkSKey:        mcNwkSKey[:],
+			McNwkSKey:        mcNetSKey[:],
 			GroupType:        ns.MulticastGroupType(req.MulticastGroup.GroupType),
 			Dr:               req.MulticastGroup.Dr,
 			Frequency:        req.MulticastGroup.Frequency,
@@ -80,9 +94,11 @@ func (a *MulticastGroupAPI) Create(ctx context.Context, req *pb.CreateMulticastG
 		},
 	}
 
-	if err = mg.MCAppSKey.UnmarshalText([]byte(req.MulticastGroup.McAppSKey)); err != nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, "mc_app_s_key: %s", err)
+	mcAppSKey, err := multicastsetup.GetMcAppSKey(mcKey, mcAddr)
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "get McAppSKey error: %s", err)
 	}
+	mg.MCAppSKey = mcAppSKey
 
 	if err = storage.Transaction(func(tx sqlx.Ext) error {
 		if err := storage.CreateMulticastGroup(ctx, tx, &mg); err != nil {
@@ -96,6 +112,10 @@ func (a *MulticastGroupAPI) Create(ctx context.Context, req *pb.CreateMulticastG
 
 	var mgID uuid.UUID
 	copy(mgID[:], mg.MulticastGroup.Id)
+
+	log.Infof("Created a multicast group, McKey: %s, McNwkSKey: %s, McAppSKey: %s, McAddr: %s",
+		mg.MCKey, mcNetSKey, mg.MCAppSKey, mcAddr,
+	)
 
 	return &pb.CreateMulticastGroupResponse{
 		Id: mgID.String(),
@@ -120,17 +140,13 @@ func (a *MulticastGroupAPI) Get(ctx context.Context, req *pb.GetMulticastGroupRe
 	}
 
 	var mcAddr lorawan.DevAddr
-	var mcNwkSKey lorawan.AES128Key
 	copy(mcAddr[:], mg.MulticastGroup.McAddr)
-	copy(mcNwkSKey[:], mg.MulticastGroup.McNwkSKey)
 
 	out := pb.GetMulticastGroupResponse{
 		MulticastGroup: &pb.MulticastGroup{
 			Id:               mgID.String(),
 			Name:             mg.Name,
 			McAddr:           mcAddr.String(),
-			McNwkSKey:        mcNwkSKey.String(),
-			McAppSKey:        mg.MCAppSKey.String(),
 			FCnt:             mg.MulticastGroup.FCnt,
 			GroupType:        pb.MulticastGroupType(mg.MulticastGroup.GroupType),
 			Dr:               mg.MulticastGroup.Dr,
@@ -179,16 +195,11 @@ func (a *MulticastGroupAPI) Update(ctx context.Context, req *pb.UpdateMulticastG
 		return nil, grpc.Errorf(codes.InvalidArgument, "mc_app_s_key: %s", err)
 	}
 
-	var mcNwkSKey lorawan.AES128Key
-	if err = mcNwkSKey.UnmarshalText([]byte(req.MulticastGroup.McNwkSKey)); err != nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, "mc_net_s_key: %s", err)
-	}
-
 	mg.Name = req.MulticastGroup.Name
 	mg.MulticastGroup = ns.MulticastGroup{
 		Id:               mg.MulticastGroup.Id,
-		McAddr:           mcAddr[:],
-		McNwkSKey:        mcNwkSKey[:],
+		McAddr:           mg.MulticastGroup.McAddr[:],
+		McNwkSKey:        mg.MulticastGroup.McNwkSKey[:],
 		GroupType:        ns.MulticastGroupType(req.MulticastGroup.GroupType),
 		Dr:               req.MulticastGroup.Dr,
 		Frequency:        req.MulticastGroup.Frequency,
@@ -196,10 +207,6 @@ func (a *MulticastGroupAPI) Update(ctx context.Context, req *pb.UpdateMulticastG
 		ServiceProfileId: mg.MulticastGroup.ServiceProfileId,
 		RoutingProfileId: mg.MulticastGroup.RoutingProfileId,
 		FCnt:             req.MulticastGroup.FCnt,
-	}
-
-	if err = mg.MCAppSKey.UnmarshalText([]byte(req.MulticastGroup.McAppSKey)); err != nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, "mc_app_s_key: %s", err)
 	}
 
 	if err = storage.Transaction(func(tx sqlx.Ext) error {
@@ -351,7 +358,7 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 		return nil, helpers.ErrToRPCError(err)
 	}
 
-	mg, err := storage.GetMulticastGroup(ctx, storage.DB(), mgID, false, true)
+	mg, err := storage.GetMulticastGroup(ctx, storage.DB(), mgID, false, false)
 	if err != nil {
 		return nil, helpers.ErrToRPCError(err)
 	}
@@ -360,13 +367,56 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 		return nil, grpc.Errorf(codes.FailedPrecondition, "service-profile of device != service-profile of multicast-group")
 	}
 
-	if err = storage.Transaction(func(tx sqlx.Ext) error {
-		if err := storage.AddDeviceToMulticastGroup(ctx, tx, mgID, devEUI); err != nil {
-			return helpers.ErrToRPCError(err)
+	dk, err := storage.GetDeviceKeys(ctx, storage.DB(), devEUI)
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+
+	var nullKey lorawan.AES128Key
+
+	// get the encrypted McKey.
+	var mcKeyEncrypted, mcRootKey lorawan.AES128Key
+	if dk.AppKey != nullKey {
+		mcRootKey, err = multicastsetup.GetMcRootKeyForAppKey(dk.AppKey)
+		if err != nil {
+			return nil, grpc.Errorf(codes.Unknown, "get McRootKey for AppKey error", err)
 		}
-		return nil
-	}); err != nil {
-		return nil, err
+	} else {
+		mcRootKey, err = multicastsetup.GetMcRootKeyForGenAppKey(dk.GenAppKey)
+		if err != nil {
+			return nil, grpc.Errorf(codes.Unknown, "get McRootKey for GenAppKey error", err)
+		}
+	}
+
+	mcKEKey, err := multicastsetup.GetMcKEKey(mcRootKey)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Unknown, "get McKEKey error", err)
+	}
+
+	block, err := aes.NewCipher(mcKEKey[:])
+	if err != nil {
+		return nil, grpc.Errorf(codes.Unknown, "new cipher error", err)
+	}
+	block.Decrypt(mcKeyEncrypted[:], mg.MCKey[:])
+
+	// create remote multicast setup record for device
+	rms := storage.RemoteMulticastSetup{
+		DevEUI:           dk.DevEUI,
+		MulticastGroupID: mgID,
+		McGroupID:        0,
+		McKeyEncrypted:   mcKeyEncrypted,
+		MinMcFCnt:        0,
+		MaxMcFCnt:        (1 << 32) - 1,
+		State:            storage.RemoteMulticastSetupSetup,
+		RetryInterval:    time.Second * 30,
+	}
+	copy(rms.McAddr[:], mg.MulticastGroup.McAddr)
+	log.Infof("remote multicast logs, before create, mcAddr: %s, %s",
+		string(rms.McAddr[:]), mg.MulticastGroup.McAddr)
+
+	err = storage.CreateRemoteMulticastSetup(ctx, storage.DB(), &rms)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Unknown, "create remote multicast setup error", err)
 	}
 
 	return &empty.Empty{}, nil
