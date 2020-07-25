@@ -12,6 +12,8 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/brocaar/lorawan"
@@ -353,6 +355,11 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 		return nil, helpers.ErrToRPCError(err)
 	}
 
+	dp, err := storage.GetDeviceProfile(ctx, storage.DB(), dev.DeviceProfileID, false, false)
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+
 	app, err := storage.GetApplication(ctx, storage.DB(), dev.ApplicationID)
 	if err != nil {
 		return nil, helpers.ErrToRPCError(err)
@@ -375,20 +382,28 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 	var nullKey lorawan.AES128Key
 
 	// get the encrypted McKey.
+	log.Info("Muticast Ket Generating Start")
 	var mcKeyEncrypted, mcRootKey lorawan.AES128Key
-	if dk.AppKey != nullKey {
+	devMacVersion, err := strconv.Atoi(strings.ReplaceAll(dp.DeviceProfile.MacVersion, ".", ""))
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+	if dk.AppKey != nullKey && devMacVersion >= 110 {
 		mcRootKey, err = multicastsetup.GetMcRootKeyForAppKey(dk.AppKey)
 		if err != nil {
 			return nil, grpc.Errorf(codes.Unknown, "get McRootKey for AppKey error", err)
 		}
+		log.Infof("Use AppKey to generate, appkey: %s, mcRootKey: %s", dk.AppKey, mcRootKey)
 	} else {
 		mcRootKey, err = multicastsetup.GetMcRootKeyForGenAppKey(dk.GenAppKey)
 		if err != nil {
 			return nil, grpc.Errorf(codes.Unknown, "get McRootKey for GenAppKey error", err)
 		}
+		log.Infof("Use GenAppKey to generate, genappkey: %s, mcRootKey: %s", dk.GenAppKey, mcRootKey)
 	}
 
 	mcKEKey, err := multicastsetup.GetMcKEKey(mcRootKey)
+	log.Infof("Get McKEKey: %s", mcKEKey)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unknown, "get McKEKey error", err)
 	}
@@ -397,7 +412,17 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unknown, "new cipher error", err)
 	}
-	block.Decrypt(mcKeyEncrypted[:], mg.MCKey[:])
+	block.Encrypt(mcKeyEncrypted[:], mg.MCKey[:])
+	log.Infof("Get McKey_Encrypted: %s", mcKeyEncrypted)
+	log.Infof("McKey is: %s", mg.MCKey)
+
+	var mcAddr lorawan.DevAddr
+	copy(mcAddr[:], mg.MulticastGroup.McAddr)
+	mcNetSKey, err := multicastsetup.GetMcNetSKey(mg.MCKey, mcAddr)
+	mcAppSKey, err := multicastsetup.GetMcAppSKey(mg.MCKey, mcAddr)
+	log.Infof("McAddr: %s, mg.mcaddr: %s", mcAddr, string(mg.MulticastGroup.McAddr))
+	log.Infof("Generated NetKey: %s", mcNetSKey)
+	log.Infof("Generated AppKey: %s", mcAppSKey)
 
 	// create remote multicast setup record for device
 	rms := storage.RemoteMulticastSetup{
