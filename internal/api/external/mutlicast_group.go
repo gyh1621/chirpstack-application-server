@@ -441,7 +441,7 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 
 	err = storage.CreateRemoteMulticastSetup(ctx, storage.DB(), &rms)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Unknown, "create remote multicast setup error", err)
+		return nil, grpc.Errorf(codes.Unknown, "create remote multicast setup error: %s", err)
 	}
 
 	return &empty.Empty{}, nil
@@ -464,13 +464,15 @@ func (a *MulticastGroupAPI) RemoveDevice(ctx context.Context, req *pb.RemoveDevi
 		return nil, grpc.Errorf(codes.Unauthenticated, "authentication failed: %s", err)
 	}
 
-	if err = storage.Transaction(func(tx sqlx.Ext) error {
-		if err := storage.RemoveDeviceFromMulticastGroup(ctx, tx, mgID, devEUI); err != nil {
-			return helpers.ErrToRPCError(err)
-		}
-		return nil
-	}); err != nil {
-		return nil, err
+	rms, err := storage.GetRemoteMulticastSetup(ctx, storage.DB(), devEUI, mgID, true)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Unknown, "get remote multiast-setup error: %s", err)
+	}
+	rms.RetryCount = 0
+	rms.State = storage.RemoteMulticastSetupDelete
+	rms.StateProvisioned = false
+	if err = storage.UpdateRemoteMulticastSetup(ctx, storage.DB(), &rms); err != nil {
+		return nil, grpc.Errorf(codes.Unknown, "update remote multiast-setup error: %s", err)
 	}
 
 	return &empty.Empty{}, nil

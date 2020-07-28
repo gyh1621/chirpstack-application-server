@@ -168,14 +168,13 @@ func handleMcGroupDeleteAns(ctx context.Context, db sqlx.Ext, devEUI lorawan.EUI
 		return fmt.Errorf("McGroupUndefined for McGroupID: %d", pl.McGroupIDHeader.McGroupID)
 	}
 
-	rms, err := storage.GetRemoteMulticastSetupByGroupID(ctx, db, devEUI, int(pl.McGroupIDHeader.McGroupID), true)
+	rms, err := storage.GetRemoteMulticastSetupByGroupID(ctx, db, devEUI, int(pl.McGroupIDHeader.McGroupID), false)
 	if err != nil {
 		return errors.Wrap(err, "get remote multicast-setup by group id error")
 	}
 
-	rms.StateProvisioned = true
-	if err := storage.UpdateRemoteMulticastSetup(ctx, db, &rms); err != nil {
-		return errors.Wrap(err, "update remote multicast-setup error")
+	if err := storage.DeleteRemoteMulticastSetup(ctx, db, devEUI, rms.MulticastGroupID); err != nil {
+		return errors.Wrap(err, "delete remote multicast-setup error")
 	}
 
 	if err := storage.RemoveDeviceFromMulticastGroup(ctx, db, rms.MulticastGroupID, devEUI); err != nil {
