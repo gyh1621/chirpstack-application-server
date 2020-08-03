@@ -349,6 +349,28 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 		return nil, grpc.Errorf(codes.Unauthenticated, "authentication failed: %s", err)
 	}
 
+	// get next available McGroupID for this device
+	mcGroupID := -1
+	existedRMSs, err := storage.GetRemoteMulticastSetupItemsByDevice(ctx, storage.DB(), devEUI)
+	if len(existedRMSs) != 0 {
+		existedIDs := make([]bool, 4)
+		for _, rms := range existedRMSs {
+			existedIDs[rms.McGroupID] = true
+		}
+		for i := 0; i < 4; i++ {
+			if !existedIDs[i] {
+				mcGroupID = i
+				break
+			}
+		}
+		if mcGroupID == -1 {
+			// no available id left
+			return nil, grpc.Errorf(codes.Unavailable, "Number of groups the device can join reaches maximum")
+		}
+	} else {
+		mcGroupID = 0
+	}
+
 	// validate that the device is under the same service-profile as the multicast-group
 	dev, err := storage.GetDevice(ctx, storage.DB(), devEUI, false, true)
 	if err != nil {
@@ -428,7 +450,7 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 	rms := storage.RemoteMulticastSetup{
 		DevEUI:           dk.DevEUI,
 		MulticastGroupID: mgID,
-		McGroupID:        0,
+		McGroupID:        mcGroupID,
 		McKeyEncrypted:   mcKeyEncrypted,
 		MinMcFCnt:        0,
 		MaxMcFCnt:        (1 << 32) - 1,
@@ -468,7 +490,11 @@ func (a *MulticastGroupAPI) RemoveDevice(ctx context.Context, req *pb.RemoveDevi
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unknown, "get remote multiast-setup error: %s", err)
 	}
+	if rms.State == storage.RemoteMulticastSetupDelete {
+		return nil, grpc.Errorf(codes.AlreadyExists, "delete request is already enqueued")
+	}
 	rms.RetryCount = 0
+	rms.RetryAfter = time.Now()
 	rms.State = storage.RemoteMulticastSetupDelete
 	rms.StateProvisioned = false
 	if err = storage.UpdateRemoteMulticastSetup(ctx, storage.DB(), &rms); err != nil {

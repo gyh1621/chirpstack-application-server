@@ -129,13 +129,18 @@ func handleMcGroupSetupAns(ctx context.Context, db sqlx.Ext, devEUI lorawan.EUI6
 		"ctx_id":      ctx.Value(logging.ContextIDKey),
 	}).Info("McGroupSetupAns received")
 
-	if pl.McGroupIDHeader.IDError {
-		return fmt.Errorf("IDError for McGroupID: %d", pl.McGroupIDHeader.McGroupID)
-	}
-
 	rms, err := storage.GetRemoteMulticastSetupByGroupID(ctx, db, devEUI, int(pl.McGroupIDHeader.McGroupID), true)
 	if err != nil {
 		return errors.Wrap(err, "get remote multicast-setup by group id error")
+	}
+
+	if pl.McGroupIDHeader.IDError {
+		if err = storage.DeleteRemoteMulticastSetup(ctx, db, devEUI, rms.MulticastGroupID); err != nil {
+			return errors.Wrap(err, "delete remote multicast-setup error")
+		}
+		log.Warn("receive IDError for McGroupID: %d", pl.McGroupIDHeader.McGroupID)
+		//return fmt.Errorf("receive IDError for McGroupID: %d", pl.McGroupIDHeader.McGroupID)
+		return nil
 	}
 
 	rms.StateProvisioned = true
@@ -164,17 +169,17 @@ func handleMcGroupDeleteAns(ctx context.Context, db sqlx.Ext, devEUI lorawan.EUI
 		"ctx_id":             ctx.Value(logging.ContextIDKey),
 	}).Info("McGroupDeleteAns received")
 
-	if pl.McGroupIDHeader.McGroupUndefined {
-		return fmt.Errorf("McGroupUndefined for McGroupID: %d", pl.McGroupIDHeader.McGroupID)
-	}
-
-	rms, err := storage.GetRemoteMulticastSetupByGroupID(ctx, db, devEUI, int(pl.McGroupIDHeader.McGroupID), false)
+	rms, err := storage.GetRemoteMulticastSetupByGroupID(ctx, db, devEUI, int(pl.McGroupIDHeader.McGroupID), true)
 	if err != nil {
 		return errors.Wrap(err, "get remote multicast-setup by group id error")
 	}
 
 	if err := storage.DeleteRemoteMulticastSetup(ctx, db, devEUI, rms.MulticastGroupID); err != nil {
 		return errors.Wrap(err, "delete remote multicast-setup error")
+	}
+
+	if pl.McGroupIDHeader.McGroupUndefined {
+		return fmt.Errorf("McGroupUndefined for McGroupID: %d", pl.McGroupIDHeader.McGroupID)
 	}
 
 	if err := storage.RemoveDeviceFromMulticastGroup(ctx, db, rms.MulticastGroupID, devEUI); err != nil {

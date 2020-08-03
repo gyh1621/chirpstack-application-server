@@ -167,6 +167,25 @@ func GetPendingRemoteMulticastSetupItems(ctx context.Context, db sqlx.Queryer, l
 	return items, nil
 }
 
+// GetRemoteMulticastSetupItemsByDevice returns a slice of all records of a device
+func GetRemoteMulticastSetupItemsByDevice(ctx context.Context, db sqlx.Queryer, devEUI lorawan.EUI64) ([]RemoteMulticastSetup, error) {
+	var items []RemoteMulticastSetup
+
+	if err := sqlx.Select(db, &items, `
+		select
+			*
+		from
+			remote_multicast_setup
+		where
+			dev_eui = $1`,
+		devEUI,
+	); err != nil {
+		return nil, handlePSQLError(Select, err, "select error")
+	}
+
+	return items, nil
+}
+
 // UpdateRemoteMulticastSetup updates the given update multicast-group setup.
 func UpdateRemoteMulticastSetup(ctx context.Context, db sqlx.Ext, dmg *RemoteMulticastSetup) error {
 	dmg.UpdatedAt = time.Now()
