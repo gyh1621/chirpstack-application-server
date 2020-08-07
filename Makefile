@@ -1,7 +1,7 @@
 .PHONY: build clean test ui-requirements serve internal/statics internal/migrations 
 PKGS := $(shell go list ./cmd/... ./internal/... | grep -v /vendor |grep -v /internal/static |grep -v /internal/migrations)
 VERSION := $(shell git describe --always |sed -e "s/^v//")
-API_VERSION := $(shell go list -m -f '{{ .Version }}' github.com/brocaar/chirpstack-api/go/v3 | awk '{n=split($$0, a, "-"); print a[n]}')
+API_VERSION := $(shell go list -m -f '{{ .Version }}' github.com/gyh1621/chirpstack-api/go/v3 | awk '{n=split($$0, a, "-"); print a[n]}')
 
 build: ui/build internal/statics internal/migrations
 	mkdir -p build
@@ -40,7 +40,7 @@ snapshot: ui/build internal/statics internal/migrations
 
 proto:
 	@rm -rf /tmp/chirpstack-api
-	@git clone https://github.com/brocaar/chirpstack-api.git /tmp/chirpstack-api
+	@git clone https://github.com/gyh1621/chirpstack-api.git /tmp/chirpstack-api
 	@git --git-dir=/tmp/chirpstack-api/.git --work-tree=/tmp/chirpstack-api checkout $(API_VERSION)
 	@go generate internal/integration/loracloud/frame_rx_info.go
 

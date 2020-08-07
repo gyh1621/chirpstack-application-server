@@ -434,17 +434,12 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unknown, "new cipher error", err)
 	}
-	block.Encrypt(mcKeyEncrypted[:], mg.MCKey[:])
+	block.Decrypt(mcKeyEncrypted[:], mg.MCKey[:])
 	log.Infof("Get McKey_Encrypted: %s", mcKeyEncrypted)
 	log.Infof("McKey is: %s", mg.MCKey)
 
 	var mcAddr lorawan.DevAddr
 	copy(mcAddr[:], mg.MulticastGroup.McAddr)
-	mcNetSKey, err := multicastsetup.GetMcNetSKey(mg.MCKey, mcAddr)
-	mcAppSKey, err := multicastsetup.GetMcAppSKey(mg.MCKey, mcAddr)
-	log.Infof("McAddr: %s, mg.mcaddr: %s", mcAddr, string(mg.MulticastGroup.McAddr))
-	log.Infof("Generated NetKey: %s", mcNetSKey)
-	log.Infof("Generated AppKey: %s", mcAppSKey)
 
 	// create remote multicast setup record for device
 	rms := storage.RemoteMulticastSetup{

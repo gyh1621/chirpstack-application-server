@@ -132,6 +132,7 @@ func (f *FUOTADeploymentAPI) CreateForDevice(ctx context.Context, req *pb.Create
 		FragSize:         maxPLSize.N - 3,
 		Redundancy:       int(req.FuotaDeployment.Redundancy),
 		MulticastTimeout: int(req.FuotaDeployment.MulticastTimeout),
+		FragmentationMatrix: uint8(req.FuotaDeployment.FragAlgo),
 	}
 
 	switch req.FuotaDeployment.GroupType {

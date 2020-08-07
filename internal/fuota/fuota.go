@@ -5,6 +5,8 @@ import (
 	"crypto/aes"
 	"crypto/rand"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -129,6 +131,10 @@ func stepMulticastCreate(ctx context.Context, db sqlx.Ext, item storage.FUOTADep
 	if err != nil {
 		return errors.Wrap(err, "get McNetSKey error")
 	}
+	log.Infof("Generated NetKey: %s", mcNetSKey)
+	log.Infof("Generated AppKey: %s", mcAppSKey)
+	log.Infof("Multi Addr: %s", devAddr)
+	log.Infof("McKey: %s", mcKey)
 
 	spID, err := storage.GetServiceProfileIDForFUOTADeployment(ctx, db, item.ID)
 	if err != nil {
@@ -212,18 +218,31 @@ func stepMulticastSetup(ctx context.Context, db sqlx.Ext, item storage.FUOTADepl
 	for _, dk := range deviceKeys {
 		var nullKey lorawan.AES128Key
 
+		var dp storage.DeviceProfile
+		if dev, err := storage.GetDevice(ctx, storage.DB(), dk.DevEUI, false, true); err != nil {
+			return errors.Wrap(err, "get device error")
+		} else if  dp, err = storage.GetDeviceProfile(ctx, storage.DB(), dev.DeviceProfileID, false, false); err != nil {
+			return errors.Wrap(err, "get device profile error")
+		}
+
 		// get the encrypted McKey.
 		var mcKeyEncrypted, mcRootKey lorawan.AES128Key
-		if dk.AppKey != nullKey {
+		devMacVersion, err := strconv.Atoi(strings.ReplaceAll(dp.DeviceProfile.MacVersion, ".", ""))
+		if err != nil {
+			return errors.Wrap(err, "get device mac version error")
+		}
+		if dk.AppKey != nullKey && devMacVersion >= 110 {
 			mcRootKey, err = multicastsetup.GetMcRootKeyForAppKey(dk.AppKey)
 			if err != nil {
 				return errors.Wrap(err, "get McRootKey for AppKey error")
 			}
+			log.Infof("Use AppKey to generate, appkey: %s, mcRootKey: %s", dk.AppKey, mcRootKey)
 		} else {
 			mcRootKey, err = multicastsetup.GetMcRootKeyForGenAppKey(dk.GenAppKey)
 			if err != nil {
 				return errors.Wrap(err, "get McRootKey for GenAppKey error")
 			}
+			log.Infof("Use GenAppKey to generate, genappkey: %s, mcRootKey: %s", dk.GenAppKey, mcRootKey)
 		}
 
 		mcKEKey, err := multicastsetup.GetMcKEKey(mcRootKey)
@@ -407,7 +426,21 @@ func stepEnqueue(ctx context.Context, db sqlx.Ext, item storage.FUOTADeployment)
 
 	// fragment the payload
 	padding := (item.FragSize - (len(item.Payload) % item.FragSize)) % item.FragSize
-	fragments, err := fragmentation.Encode(append(item.Payload, make([]byte, padding)...), item.FragSize, item.Redundancy)
+	var fragments [][]byte
+	var err error
+
+	switch item.FragmentationMatrix {
+	case 0: // FEC encoding
+		fragments, err = fragmentation.Encode(append(item.Payload, make([]byte, padding)...), item.FragSize, item.Redundancy)
+	case 7: // disable encoding
+		// fragment the data into rows
+		data := append(item.Payload, make([]byte, padding)...)
+		for i := 0; i < len(data)/item.FragSize; i++ {
+			offset := i * item.FragSize
+			fragments = append(fragments, data[offset:offset+item.FragSize])
+		}
+	}
+
 	if err != nil {
 		return errors.Wrap(err, "fragment payload error")
 	}
@@ -426,6 +459,7 @@ func stepEnqueue(ctx context.Context, db sqlx.Ext, item storage.FUOTADeployment)
 			},
 		}
 		b, err := cmd.MarshalBinary()
+		log.Warnf("data cmd bytes: %x", b)
 		if err != nil {
 			return errors.Wrap(err, "marshal binary error")
 		}

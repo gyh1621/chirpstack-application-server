@@ -6,20 +6,16 @@ require (
 	cloud.google.com/go v0.49.0 // indirect
 	github.com/NickBall/go-aes-key-wrap v0.0.0-20170929221519-1c3aa3e4dfc5
 	github.com/aws/aws-sdk-go v1.26.3
-	github.com/brocaar/lora-app-server v2.5.1+incompatible // indirect
-	github.com/brocaar/loraserver v2.5.0+incompatible // indirect
 	github.com/brocaar/lorawan v0.0.0-20200701080958-20a4ab23bf94
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/elazarl/go-bindata-assetfs v1.0.0
-	github.com/garyburd/redigo v1.6.0 // indirect
 	github.com/go-redis/redis/v7 v7.2.0
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.3.5
-	github.com/gomodule/redigo v1.8.2 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c // indirect
 	github.com/goreleaser/goreleaser v0.106.0
 	github.com/goreleaser/nfpm v0.11.0
@@ -28,7 +24,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.12.1
-	github.com/gyh1621/chirpstack-api/go/v3 v3.7.3
+	github.com/gyh1621/chirpstack-api/go/v3 v3.7.5
 	github.com/jacobsa/crypto v0.0.0-20190317225127-9f44e2d11115 // indirect
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/jteeuwen/go-bindata v3.0.8-0.20180305030458-6025e8de665b+incompatible
@@ -42,7 +38,6 @@ require (
 	github.com/prometheus/procfs v0.0.8 // indirect
 	github.com/robertkrimen/otto v0.0.0-20191217063420-37f8e9a2460c
 	github.com/rubenv/sql-migrate v0.0.0-20191213152630-06338513c237
-	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/segmentio/kafka-go v0.3.6
 	github.com/sirupsen/logrus v1.4.2
 	github.com/smartystreets/assertions v1.0.0 // indirect
