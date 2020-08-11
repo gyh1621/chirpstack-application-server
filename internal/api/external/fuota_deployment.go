@@ -31,6 +31,149 @@ func NewFUOTADeploymentAPI(validator auth.Validator) *FUOTADeploymentAPI {
 	}
 }
 
+// CreateForGroup creates a deployment for a given multicast group
+func (f *FUOTADeploymentAPI) CreateForGroup(ctx context.Context, req *pb.CreateFUOTADeploymentForGroupRequest) (*pb.CreateFUOTADeploymentForGroupResponse, error) {
+	if req.FuotaDeployment == nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "fuota_deployment must not be nil")
+	}
+
+	// Get multicast group
+	mgID, err := uuid.FromString(req.McGroupId)
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "multiucast group id: %s", err)
+	}
+
+	// Get org id
+	mg, err := storage.GetMulticastGroup(ctx, storage.DB(), mgID, false, true)
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+	sp, err := storage.GetServiceProfile(ctx, storage.DB(), mg.ServiceProfileID, true)
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+
+	// Vaidate access, the access scope here shoulbe be same as multicast group create action
+	if err = f.validator.Validate(ctx,
+		auth.ValidateMulticastGroupsAccess(auth.Create, sp.OrganizationID)); err != nil {
+		return nil, grpc.Errorf(codes.Unauthenticated, "authentication failed: %s", err)
+	}
+
+	// Get network server region and max payload size
+	n, err := storage.GetNetworkServerForMulticastGroupID(ctx, storage.DB(), mgID)
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+
+	nsClient, err := networkserver.GetPool().Get(n.Server, []byte(n.CACert), []byte(n.TLSCert), []byte(n.TLSKey))
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+
+	versionResp, err := nsClient.GetVersion(ctx, &empty.Empty{})
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+
+	var b band.Band
+
+	switch versionResp.Region {
+	case common.Region_EU868:
+		b, err = band.GetConfig(band.EU868, false, lorawan.DwellTimeNoLimit)
+		if err != nil {
+			return nil, helpers.ErrToRPCError(err)
+		}
+	case common.Region_US915:
+		b, err = band.GetConfig(band.US915, false, lorawan.DwellTimeNoLimit)
+		if err != nil {
+			return nil, helpers.ErrToRPCError(err)
+		}
+	case common.Region_CN779:
+		b, err = band.GetConfig(band.CN779, false, lorawan.DwellTimeNoLimit)
+		if err != nil {
+			return nil, helpers.ErrToRPCError(err)
+		}
+	case common.Region_EU433:
+		b, err = band.GetConfig(band.EU433, false, lorawan.DwellTimeNoLimit)
+		if err != nil {
+			return nil, helpers.ErrToRPCError(err)
+		}
+	case common.Region_AU915:
+		b, err = band.GetConfig(band.AU915, false, lorawan.DwellTimeNoLimit)
+		if err != nil {
+			return nil, helpers.ErrToRPCError(err)
+		}
+	case common.Region_CN470:
+		b, err = band.GetConfig(band.CN470, false, lorawan.DwellTimeNoLimit)
+		if err != nil {
+			return nil, helpers.ErrToRPCError(err)
+		}
+	case common.Region_AS923:
+		b, err = band.GetConfig(band.AS923, false, lorawan.DwellTimeNoLimit)
+		if err != nil {
+			return nil, helpers.ErrToRPCError(err)
+		}
+	case common.Region_KR920:
+		b, err = band.GetConfig(band.KR920, false, lorawan.DwellTimeNoLimit)
+		if err != nil {
+			return nil, helpers.ErrToRPCError(err)
+		}
+	case common.Region_IN865:
+		b, err = band.GetConfig(band.IN865, false, lorawan.DwellTimeNoLimit)
+		if err != nil {
+			return nil, helpers.ErrToRPCError(err)
+		}
+	case common.Region_RU864:
+		b, err = band.GetConfig(band.RU864, false, lorawan.DwellTimeNoLimit)
+		if err != nil {
+			return nil, helpers.ErrToRPCError(err)
+		}
+	default:
+		return nil, grpc.Errorf(codes.Internal, "region %s is not implemented", versionResp.Region)
+	}
+
+	maxPLSize, err := b.GetMaxPayloadSizeForDataRateIndex("", "", int(req.FuotaDeployment.Dr))
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+
+	// Create FUOTA Deployment
+	fd := storage.FUOTADeployment{
+		Name:                req.FuotaDeployment.Name,
+		DR:                  int(req.FuotaDeployment.Dr),
+		Frequency:           int(req.FuotaDeployment.Frequency),
+		Payload:             req.FuotaDeployment.Payload,
+		FragSize:            maxPLSize.N - 3,
+		Redundancy:          int(req.FuotaDeployment.Redundancy),
+		MulticastTimeout:    int(req.FuotaDeployment.MulticastTimeout),
+		FragmentationMatrix: uint8(req.FuotaDeployment.FragAlgo),
+		MulticastGroupID:    &mgID,
+	}
+
+	switch req.FuotaDeployment.GroupType {
+	case pb.MulticastGroupType_CLASS_C:
+		fd.GroupType = storage.FUOTADeploymentGroupTypeC
+	default:
+		return nil, grpc.Errorf(codes.InvalidArgument, "group_type %s is not supported", req.FuotaDeployment.GroupType)
+	}
+
+	fd.UnicastTimeout, err = ptypes.Duration(req.FuotaDeployment.UnicastTimeout)
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "unicast_timeout: %s", err)
+	}
+
+	err = storage.Transaction(func(db sqlx.Ext) error {
+		return storage.CreateFUOTADeploymentForGroup(ctx, db, &fd, mgID)
+	})
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+
+	return &pb.CreateFUOTADeploymentForGroupResponse{
+		Id: fd.ID.String(),
+	}, nil
+}
+
 // CreateForDevice creates a deployment for the given DevEUI.
 func (f *FUOTADeploymentAPI) CreateForDevice(ctx context.Context, req *pb.CreateFUOTADeploymentForDeviceRequest) (*pb.CreateFUOTADeploymentForDeviceResponse, error) {
 	if req.FuotaDeployment == nil {
@@ -125,13 +268,13 @@ func (f *FUOTADeploymentAPI) CreateForDevice(ctx context.Context, req *pb.Create
 	}
 
 	fd := storage.FUOTADeployment{
-		Name:             req.FuotaDeployment.Name,
-		DR:               int(req.FuotaDeployment.Dr),
-		Frequency:        int(req.FuotaDeployment.Frequency),
-		Payload:          req.FuotaDeployment.Payload,
-		FragSize:         maxPLSize.N - 3,
-		Redundancy:       int(req.FuotaDeployment.Redundancy),
-		MulticastTimeout: int(req.FuotaDeployment.MulticastTimeout),
+		Name:                req.FuotaDeployment.Name,
+		DR:                  int(req.FuotaDeployment.Dr),
+		Frequency:           int(req.FuotaDeployment.Frequency),
+		Payload:             req.FuotaDeployment.Payload,
+		FragSize:            maxPLSize.N - 3,
+		Redundancy:          int(req.FuotaDeployment.Redundancy),
+		MulticastTimeout:    int(req.FuotaDeployment.MulticastTimeout),
 		FragmentationMatrix: uint8(req.FuotaDeployment.FragAlgo),
 	}
 

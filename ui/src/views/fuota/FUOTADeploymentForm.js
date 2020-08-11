@@ -48,6 +48,15 @@ class FUOTADeploymentForm extends FormComponent {
     callbackFunc(options);
   }
 
+  getFragAlgoOptions(search, callbackFunc) {
+    const options = [
+      {value: 0, label: "FEC"},
+      {value: 7, label: "No Encoding"}
+    ];
+
+    callbackFunc(options);
+  }
+
   onFileChange(e) {
     let object = this.state.object;
 
@@ -182,6 +191,20 @@ class FUOTADeploymentForm extends FormComponent {
             onChange={this.onChange}
             getOptions={this.getMulticastTimeoutOptions}
           />
+        </FormControl>
+
+        <FormControl fullWidth margin="normal">
+          <FormLabel className={this.props.classes.formLabel} required>Encoding Algorithm</FormLabel>
+          <AutocompleteSelect
+              id="fragAlgo"
+              label="Encoding Algorithm"
+              value={this.state.object.fragAlgo || 7}
+              onChange={this.onChange}
+              getOptions={this.getFragAlgoOptions}
+          />
+          <FormHelperText>
+            The encoding algorithm to use.
+          </FormHelperText>
         </FormControl>
 
       </Form>

@@ -82,6 +82,7 @@ create index idx_remote_fragmentation_session_retry_after on remote_fragmentatio
 
 create table fuota_deployment (
     id uuid primary key,
+    type varchar(20) not null,
     created_at timestamp with time zone not null,
     updated_at timestamp with time zone not null,
     name varchar(100) not null,

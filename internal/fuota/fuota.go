@@ -5,6 +5,8 @@ import (
 	"crypto/aes"
 	"crypto/rand"
 	"fmt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"strconv"
 	"strings"
 	"time"
@@ -27,7 +29,6 @@ import (
 var (
 	interval                          = time.Second
 	batchSize                         = 1
-	mcGroupID                         int
 	fragIndex                         int
 	remoteMulticastSetupRetries       int
 	remoteFragmentationSessionRetries int
@@ -43,7 +44,8 @@ func Setup(conf config.Config) error {
 		return errors.Wrap(err, "application-server id to uuid error")
 	}
 
-	mcGroupID = conf.ApplicationServer.FUOTADeployment.McGroupID
+	// TODO: remove from config
+	//mcGroupID = conf.ApplicationServer.FUOTADeployment.McGroupID
 	fragIndex = conf.ApplicationServer.FUOTADeployment.FragIndex
 	remoteMulticastSetupRetries = conf.ApplicationServer.RemoteMulticastSetup.SyncRetries
 	remoteFragmentationSessionRetries = conf.ApplicationServer.FragmentationSession.SyncRetries
@@ -219,9 +221,9 @@ func stepMulticastSetup(ctx context.Context, db sqlx.Ext, item storage.FUOTADepl
 		var nullKey lorawan.AES128Key
 
 		var dp storage.DeviceProfile
-		if dev, err := storage.GetDevice(ctx, storage.DB(), dk.DevEUI, false, true); err != nil {
+		if dev, err := storage.GetDevice(ctx, db, dk.DevEUI, false, true); err != nil {
 			return errors.Wrap(err, "get device error")
-		} else if  dp, err = storage.GetDeviceProfile(ctx, storage.DB(), dev.DeviceProfileID, false, false); err != nil {
+		} else if dp, err = storage.GetDeviceProfile(ctx, db, dev.DeviceProfileID, false, false); err != nil {
 			return errors.Wrap(err, "get device profile error")
 		}
 
@@ -255,6 +257,28 @@ func stepMulticastSetup(ctx context.Context, db sqlx.Ext, item storage.FUOTADepl
 			return errors.Wrap(err, "new cipher error")
 		}
 		block.Decrypt(mcKeyEncrypted[:], mcg.MCKey[:])
+
+		// get next available McGroupID for this device
+		mcGroupID := -1
+		existedRMSs, err := storage.GetRemoteMulticastSetupItemsByDevice(ctx, db, dk.DevEUI)
+		if len(existedRMSs) != 0 {
+			existedIDs := make([]bool, 4)
+			for _, rms := range existedRMSs {
+				existedIDs[rms.McGroupID] = true
+			}
+			for i := 0; i < 4; i++ {
+				if !existedIDs[i] {
+					mcGroupID = i
+					break
+				}
+			}
+			if mcGroupID == -1 {
+				// no available id left
+				return grpc.Errorf(codes.Unavailable, "Number of groups the device can join reaches maximum")
+			}
+		} else {
+			mcGroupID = 0
+		}
 
 		// create remote multicast setup record for device
 		rms := storage.RemoteMulticastSetup{
@@ -296,10 +320,13 @@ func stepFragmentationSessSetup(ctx context.Context, db sqlx.Ext, item storage.F
 	}
 
 	// query all devices with complete multicast setup
-	var devEUIs []lorawan.EUI64
-	err := sqlx.Select(db, &devEUIs, `
+	var rmsItems []struct {
+		DevEUI    lorawan.EUI64 `db:"dev_eui"`
+		McGroupID int           `db:"mc_group_id"`
+	}
+	err := sqlx.Select(db, &rmsItems, `
 		select
-			dev_eui
+			dev_eui, mc_group_id
 		from
 			remote_multicast_setup
 		where
@@ -317,17 +344,17 @@ func stepFragmentationSessSetup(ctx context.Context, db sqlx.Ext, item storage.F
 	padding := (item.FragSize - (len(item.Payload) % item.FragSize)) % item.FragSize
 	nbFrag := (len(item.Payload) + padding) / item.FragSize
 
-	for _, devEUI := range devEUIs {
+	for _, rmsItem := range rmsItems {
 		// delete existing fragmentation session if it exist
-		err = storage.DeleteRemoteFragmentationSession(ctx, db, devEUI, fragIndex)
+		err = storage.DeleteRemoteFragmentationSession(ctx, db, rmsItem.DevEUI, fragIndex)
 		if err != nil && err != storage.ErrDoesNotExist {
 			return errors.Wrap(err, "delete remote fragmentation session error")
 		}
 
 		fs := storage.RemoteFragmentationSession{
-			DevEUI:              devEUI,
+			DevEUI:              rmsItem.DevEUI,
 			FragIndex:           fragIndex,
-			MCGroupIDs:          []int{mcGroupID},
+			MCGroupIDs:          []int{rmsItem.McGroupID},
 			NbFrag:              nbFrag,
 			FragSize:            item.FragSize,
 			FragmentationMatrix: item.FragmentationMatrix,
@@ -392,10 +419,15 @@ func stepMulticastSessCSetup(ctx context.Context, db sqlx.Ext, item storage.FUOT
 	}
 
 	for _, devEUI := range devEUIs {
+		// get mc group id
+		rms, err := storage.GetRemoteMulticastSetup(ctx, db, devEUI, *item.MulticastGroupID, false)
+		if err != nil {
+			return errors.Wrap(err, "get remote multicast setup error")
+		}
 		rmccs := storage.RemoteMulticastClassCSession{
 			DevEUI:           devEUI,
 			MulticastGroupID: *item.MulticastGroupID,
-			McGroupID:        mcGroupID,
+			McGroupID:        rms.McGroupID,
 			DLFrequency:      int(mcg.MulticastGroup.Frequency),
 			DR:               int(mcg.MulticastGroup.Dr),
 			SessionTime:      time.Now().Add(time.Duration(remoteMulticastSetupRetries) * item.UnicastTimeout),
@@ -649,13 +681,30 @@ func stepSetDeviceStatus(ctx context.Context, db sqlx.Ext, item storage.FUOTADep
 }
 
 func stepCleanup(ctx context.Context, db sqlx.Ext, item storage.FUOTADeployment) error {
-	if item.MulticastGroupID != nil {
+	if item.MulticastGroupID != nil && item.Type == storage.FUOTADeploymentForDevice {
+		// FUOTA for Device, remove multicast group
 		if err := storage.DeleteMulticastGroup(ctx, db, *item.MulticastGroupID); err != nil {
 			return errors.Wrap(err, "delete multicast group error")
 		}
+		item.MulticastGroupID = nil
+	} else {
+		// FUOTA for group, remove multicast class c session records
+		nbDevice, err := storage.GetDeviceCountForMulticastGroup(ctx, db, *item.MulticastGroupID)
+		if err != nil {
+			return errors.Wrap(err, "get device count error")
+		}
+		deviceList, err := storage.GetDevicesForMulticastGroup(ctx, db, *item.MulticastGroupID, nbDevice, 0)
+		if err != nil {
+			return errors.Wrap(err, "get devices for multicast group error")
+		}
+		for _, device := range deviceList {
+			err = storage.DeleteRemoteMulticastClassCSession(ctx, db, device.Device.DevEUI, *item.MulticastGroupID)
+			if err != nil {
+				return errors.Wrap(err, "delete multicast class c session error")
+			}
+		}
 	}
 
-	item.MulticastGroupID = nil
 	item.State = storage.FUOTADeploymentDone
 
 	err := storage.UpdateFUOTADeployment(ctx, db, &item)

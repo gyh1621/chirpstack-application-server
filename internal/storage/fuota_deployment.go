@@ -15,6 +15,15 @@ import (
 	"github.com/gyh1621/chirpstack-application-server/internal/logging"
 )
 
+// FUOTADeploymentType defines the fuota deployment type.
+type FUOTADeploymentType string
+
+// FUOTA deployment type.
+const (
+	FUOTADeploymentForDevice FUOTADeploymentType = "DEVICE"
+	FUOTADeploymentForGroup  FUOTADeploymentType = "GROUP"
+)
+
 // FUOTADeploymentState defines the fuota deployment state.
 type FUOTADeploymentState string
 
@@ -53,6 +62,7 @@ const (
 // FUOTADeployment defiles a firmware update over the air deployment.
 type FUOTADeployment struct {
 	ID                  uuid.UUID                `db:"id"`
+	Type                FUOTADeploymentType      `db:"type"`
 	CreatedAt           time.Time                `db:"created_at"`
 	UpdatedAt           time.Time                `db:"updated_at"`
 	Name                string                   `db:"name"`
@@ -146,6 +156,7 @@ func CreateFUOTADeploymentForDevice(ctx context.Context, db sqlx.Ext, fd *FUOTAD
 		return errors.Wrap(err, "new uuid error")
 	}
 
+	fd.Type = FUOTADeploymentForDevice
 	fd.CreatedAt = now
 	fd.UpdatedAt = now
 	fd.NextStepAfter = now
@@ -156,6 +167,7 @@ func CreateFUOTADeploymentForDevice(ctx context.Context, db sqlx.Ext, fd *FUOTAD
 	_, err = db.Exec(`
 		insert into fuota_deployment (
 			id,
+			type,
 			created_at,
 			updated_at,
 			name,
@@ -175,8 +187,9 @@ func CreateFUOTADeploymentForDevice(ctx context.Context, db sqlx.Ext, fd *FUOTAD
 			dr,
 			frequency,
 			ping_slot_period
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
 		fd.ID,
+		fd.Type,
 		fd.CreatedAt,
 		fd.UpdatedAt,
 		fd.Name,
@@ -229,6 +242,113 @@ func CreateFUOTADeploymentForDevice(ctx context.Context, db sqlx.Ext, fd *FUOTAD
 	return nil
 }
 
+// CreateFUOTADeploymentForGroup creates and initializes a FUOTA deployment
+// for the given multicast group.
+func CreateFUOTADeploymentForGroup(ctx context.Context, db sqlx.Ext, fd *FUOTADeployment, mgID uuid.UUID) error {
+	now := time.Now()
+	var err error
+	fd.ID, err = uuid.NewV4()
+	if err != nil {
+		return errors.Wrap(err, "new uuid error")
+	}
+
+	fd.Type = FUOTADeploymentForGroup
+	fd.CreatedAt = now
+	fd.UpdatedAt = now
+	fd.NextStepAfter = now
+	if fd.State == "" {
+		fd.State = FUOTADeploymentFragmentationSessSetup
+	}
+
+	_, err = db.Exec(`
+		insert into fuota_deployment (
+			id,
+			type,
+			created_at,
+			updated_at,
+			name,
+			multicast_group_id,
+
+			fragmentation_matrix,
+			descriptor,
+			payload,
+			state,
+			next_step_after,
+			unicast_timeout,
+			frag_size,
+			redundancy,
+			block_ack_delay,
+			multicast_timeout,
+			group_type,
+			dr,
+			frequency,
+			ping_slot_period
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
+		fd.ID,
+		fd.Type,
+		fd.CreatedAt,
+		fd.UpdatedAt,
+		fd.Name,
+		fd.MulticastGroupID,
+		[]byte{fd.FragmentationMatrix},
+		fd.Descriptor[:],
+		fd.Payload,
+		fd.State,
+		fd.NextStepAfter,
+		fd.UnicastTimeout,
+		fd.FragSize,
+		fd.Redundancy,
+		fd.BlockAckDelay,
+		fd.MulticastTimeout,
+		fd.GroupType,
+		fd.DR,
+		fd.Frequency,
+		fd.PingSlotPeriod,
+	)
+	if err != nil {
+		return handlePSQLError(Insert, err, "insert error")
+	}
+
+	nbDevice, err := GetDeviceCountForMulticastGroup(ctx, db, mgID)
+	if err != nil {
+		return errors.Wrap(err, "get device count error")
+	}
+	deviceList, err := GetDevicesForMulticastGroup(ctx, db, mgID, nbDevice, 0)
+	if err != nil {
+		return errors.Wrap(err, "get devices for multicast group error")
+	}
+
+	for _, device := range deviceList {
+		_, err = db.Exec(`
+		insert into fuota_deployment_device (
+			fuota_deployment_id,
+			dev_eui,
+			created_at,
+			updated_at,
+			state,
+			error_message
+		) values ($1, $2, $3, $4, $5, $6)`,
+			fd.ID,
+			device.Device.DevEUI,
+			now,
+			now,
+			FUOTADeploymentDevicePending,
+			"",
+		)
+		if err != nil {
+			return handlePSQLError(Insert, err, "insert error")
+		}
+	}
+
+	log.WithFields(log.Fields{
+		"mgid":   mgID,
+		"id":     fd.ID,
+		"ctx_id": ctx.Value(logging.ContextIDKey),
+	}).Info("fuota deploymented created for group")
+
+	return nil
+}
+
 // GetFUOTADeployment returns the FUOTA deployment for the given ID.
 func GetFUOTADeployment(ctx context.Context, db sqlx.Ext, id uuid.UUID, forUpdate bool) (FUOTADeployment, error) {
 	var fu string
@@ -239,6 +359,7 @@ func GetFUOTADeployment(ctx context.Context, db sqlx.Ext, id uuid.UUID, forUpdat
 	row := db.QueryRowx(`
 		select
 			id,
+			type,
 			created_at,
 			updated_at,
 			name,
@@ -274,6 +395,7 @@ func GetPendingFUOTADeployments(ctx context.Context, db sqlx.Ext, batchSize int)
 	rows, err := db.Queryx(`
 		select
 			id,
+			type,
 			created_at,
 			updated_at,
 			name,
@@ -630,6 +752,7 @@ func scanFUOTADeployment(row sqlx.ColScanner) (FUOTADeployment, error) {
 
 	err := row.Scan(
 		&fd.ID,
+		&fd.Type,
 		&fd.CreatedAt,
 		&fd.UpdatedAt,
 		&fd.Name,
