@@ -59,6 +59,21 @@ class MulticastGroupStore extends EventEmitter {
     });
   }
 
+  sendMessage(multicastGroup, multicastGroupQueueItem, callbackFunc) {
+    this.swagger.then(client => {
+      client.apis.MulticastGroupService.Enqueue({
+        "multicast_queue_item.multicast_group_id": multicastGroup.id,
+        body: multicastGroupQueueItem
+      })
+      .then(checkStatus)
+      .then(resp => {
+        this.notify("sent a message");
+        callbackFunc(resp.obj);
+      })
+      .catch(errorHandler);
+    });
+  }
+
   delete(id, callbackFunc) {
     this.swagger.then(client => {
       client.apis.MulticastGroupService.Delete({

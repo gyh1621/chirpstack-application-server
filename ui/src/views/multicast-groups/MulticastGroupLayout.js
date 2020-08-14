@@ -16,6 +16,7 @@ import DeviceAdmin from "../../components/DeviceAdmin";
 import MulticastGroupStore from "../../stores/MulticastGroupStore";
 import SessionStore from "../../stores/SessionStore";
 import UpdateMulticastGroup from "./UpdateMulticastGroup";
+import SendMulticastMessage from "./SendMulticastMessage";
 import theme from "../../theme";
 import ListMulticastGroupDevices from "./ListMulticastGroupDevices";
 
@@ -76,6 +77,8 @@ class MulticastGroupLayout extends Component {
 
     if (window.location.href.endsWith("/edit")) {
       tab = 1;
+    } else if (window.location.href.endsWith("/send")) {
+      tab = 2;
     }
 
     this.setState({
@@ -130,6 +133,7 @@ class MulticastGroupLayout extends Component {
           >
             <Tab label="Devices" component={Link} to={`/organizations/${this.props.match.params.organizationID}/multicast-groups/${this.props.match.params.multicastGroupID}`} />
             {this.state.admin && <Tab label="Configuration" component={Link} to={`/organizations/${this.props.match.params.organizationID}/multicast-groups/${this.props.match.params.multicastGroupID}/edit`} />}
+            <Tab label="Send Messages" component={Link} to={`/organizations/${this.props.match.params.organizationID}/multicast-groups/${this.props.match.params.multicastGroupID}/send`} />}
           </Tabs>
         </Grid>
 
@@ -137,6 +141,7 @@ class MulticastGroupLayout extends Component {
           <Switch>
             <Route exact path={`${this.props.match.path}/edit`} render={props => <UpdateMulticastGroup multicastGroup={this.state.multicastGroup.multicastGroup} {...props} />} />
             <Route exact path={`${this.props.match.path}`} render={props => <ListMulticastGroupDevices multicastGroup={this.state.multicastGroup.multicastGroup} {...props} />} />
+            <Route exact path={`${this.props.match.path}/send`} render={props => <SendMulticastMessage multicastGroup={this.state.multicastGroup.multicastGroup} {...props} />} />
           </Switch>
         </Grid>
       </Grid>
