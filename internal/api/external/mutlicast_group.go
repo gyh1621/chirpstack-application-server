@@ -339,9 +339,35 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 		return nil, grpc.Errorf(codes.InvalidArgument, "multicast_group_id: %s", err)
 	}
 
-	var devEUI lorawan.EUI64
-	if err = devEUI.UnmarshalText([]byte(req.DevEui)); err != nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, "dev_eui: %s", err)
+	if err = a.validator.Validate(ctx,
+		auth.ValidateMulticastGroupAccess(auth.Update, mgID)); err != nil {
+		return nil, grpc.Errorf(codes.Unauthenticated, "authentication failed: %s", err)
+	}
+
+	devEUIs := make([]lorawan.EUI64, len(req.DevEuis))
+	for idx, rDevEUI := range req.DevEuis {
+		var devEUI lorawan.EUI64
+		if err = devEUI.UnmarshalText([]byte(rDevEUI)); err != nil {
+			return nil, grpc.Errorf(codes.InvalidArgument, "parse dev_eui: %s", err)
+		}
+		devEUIs[idx] = devEUI
+	}
+
+	// add devices to the group
+	for _, devEUI := range devEUIs {
+		if err = addDevice(ctx, mgID, devEUI); err != nil {
+			return nil, grpc.Errorf(codes.Internal, "fail on dev_eui %s: %s", devEUI, err)
+		}
+	}
+
+	return &empty.Empty{}, nil
+}
+
+// AddApplicationDevice adds devices of the given application to the multicast-group.
+func (a *MulticastGroupAPI) AddApplicationDevice(ctx context.Context, req *pb.AddApplicationDeviceToMulticastGroupRequest) (*empty.Empty, error) {
+	mgID, err := uuid.FromString(req.MulticastGroupId)
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "multicast_group_id: %s", err)
 	}
 
 	if err = a.validator.Validate(ctx,
@@ -349,6 +375,68 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 		return nil, grpc.Errorf(codes.Unauthenticated, "authentication failed: %s", err)
 	}
 
+	// check application exists
+	if _, err := storage.GetApplication(ctx, storage.DB(), req.ApplicationId); err != nil {
+		return nil, grpc.Errorf(codes.NotFound, "application %d not exist", req.ApplicationId)
+	}
+
+	// get devices of this application which already in this multicast group
+	nbDevice, err := storage.GetDeviceCountForMulticastGroup(ctx, storage.DB(), mgID)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "get device count error")
+	}
+	joinedDevices, err := storage.GetDevicesForMulticastGroup(ctx, storage.DB(), mgID, nbDevice, 0)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "get devices for multicast group error")
+	}
+
+	// collect excluded devices
+	excludeDevEUI := make(map[lorawan.EUI64]struct{}, len(req.DevEuis))
+	for _, rDevEUI := range req.DevEuis {
+		var devEUI lorawan.EUI64
+		if err = devEUI.UnmarshalText([]byte(rDevEUI)); err != nil {
+			return nil, grpc.Errorf(codes.InvalidArgument, "parse dev_eui: %s", err)
+		}
+		excludeDevEUI[devEUI] = struct{}{}
+	}
+	for _, d := range joinedDevices {
+		excludeDevEUI[d.DevEUI] = struct{}{}
+	}
+
+	// Get devices of the given application
+	filters := storage.DeviceFilters{
+		ApplicationID: req.ApplicationId,
+		Limit:         0,
+		Offset:        0,
+	}
+
+	count, err := storage.GetDeviceCount(ctx, storage.DB(), filters)
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+
+	filters.Limit = count
+
+	devices, err := storage.GetDevices(ctx, storage.DB(), filters)
+	if err != nil {
+		return nil, helpers.ErrToRPCError(err)
+	}
+
+	// add devices to the group
+	for _, d := range devices {
+		devEUI := d.DevEUI
+		if _, exclude := excludeDevEUI[devEUI]; exclude {
+			continue
+		}
+		if err = addDevice(ctx, mgID, devEUI); err != nil {
+			return nil, grpc.Errorf(codes.Internal, "fail on dev_eui %s: %s", devEUI, err)
+		}
+	}
+
+	return &empty.Empty{}, nil
+}
+
+func addDevice(ctx context.Context, mgID uuid.UUID, devEUI lorawan.EUI64) error {
 	// get next available McGroupID for this device
 	mcGroupID := -1
 	existedRMSs, err := storage.GetRemoteMulticastSetupItemsByDevice(ctx, storage.DB(), devEUI)
@@ -365,7 +453,7 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 		}
 		if mcGroupID == -1 {
 			// no available id left
-			return nil, grpc.Errorf(codes.Unavailable, "Number of groups the device can join reaches maximum")
+			return grpc.Errorf(codes.Unavailable, "Number of groups the device can join reaches maximum")
 		}
 	} else {
 		mcGroupID = 0
@@ -374,31 +462,31 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 	// validate that the device is under the same service-profile as the multicast-group
 	dev, err := storage.GetDevice(ctx, storage.DB(), devEUI, false, true)
 	if err != nil {
-		return nil, helpers.ErrToRPCError(err)
+		return helpers.ErrToRPCError(err)
 	}
 
 	dp, err := storage.GetDeviceProfile(ctx, storage.DB(), dev.DeviceProfileID, false, false)
 	if err != nil {
-		return nil, helpers.ErrToRPCError(err)
+		return helpers.ErrToRPCError(err)
 	}
 
 	app, err := storage.GetApplication(ctx, storage.DB(), dev.ApplicationID)
 	if err != nil {
-		return nil, helpers.ErrToRPCError(err)
+		return helpers.ErrToRPCError(err)
 	}
 
 	mg, err := storage.GetMulticastGroup(ctx, storage.DB(), mgID, false, false)
 	if err != nil {
-		return nil, helpers.ErrToRPCError(err)
+		return helpers.ErrToRPCError(err)
 	}
 
 	if app.ServiceProfileID != mg.ServiceProfileID {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "service-profile of device != service-profile of multicast-group")
+		return grpc.Errorf(codes.FailedPrecondition, "service-profile of device != service-profile of multicast-group")
 	}
 
 	dk, err := storage.GetDeviceKeys(ctx, storage.DB(), devEUI)
 	if err != nil {
-		return nil, helpers.ErrToRPCError(err)
+		return helpers.ErrToRPCError(err)
 	}
 
 	var nullKey lorawan.AES128Key
@@ -408,18 +496,18 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 	var mcKeyEncrypted, mcRootKey lorawan.AES128Key
 	devMacVersion, err := strconv.Atoi(strings.ReplaceAll(dp.DeviceProfile.MacVersion, ".", ""))
 	if err != nil {
-		return nil, helpers.ErrToRPCError(err)
+		return helpers.ErrToRPCError(err)
 	}
 	if dk.AppKey != nullKey && devMacVersion >= 110 {
 		mcRootKey, err = multicastsetup.GetMcRootKeyForAppKey(dk.AppKey)
 		if err != nil {
-			return nil, grpc.Errorf(codes.Unknown, "get McRootKey for AppKey error", err)
+			return grpc.Errorf(codes.Unknown, "get McRootKey for AppKey error", err)
 		}
 		log.Infof("Use AppKey to generate, appkey: %s, mcRootKey: %s", dk.AppKey, mcRootKey)
 	} else {
 		mcRootKey, err = multicastsetup.GetMcRootKeyForGenAppKey(dk.GenAppKey)
 		if err != nil {
-			return nil, grpc.Errorf(codes.Unknown, "get McRootKey for GenAppKey error", err)
+			return grpc.Errorf(codes.Unknown, "get McRootKey for GenAppKey error", err)
 		}
 		log.Infof("Use GenAppKey to generate, genappkey: %s, mcRootKey: %s", dk.GenAppKey, mcRootKey)
 	}
@@ -427,12 +515,12 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 	mcKEKey, err := multicastsetup.GetMcKEKey(mcRootKey)
 	log.Infof("Get McKEKey: %s", mcKEKey)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Unknown, "get McKEKey error", err)
+		return grpc.Errorf(codes.Unknown, "get McKEKey error", err)
 	}
 
 	block, err := aes.NewCipher(mcKEKey[:])
 	if err != nil {
-		return nil, grpc.Errorf(codes.Unknown, "new cipher error", err)
+		return grpc.Errorf(codes.Unknown, "new cipher error", err)
 	}
 	block.Decrypt(mcKeyEncrypted[:], mg.MCKey[:])
 	log.Infof("Get McKey_Encrypted: %s", mcKeyEncrypted)
@@ -458,10 +546,10 @@ func (a *MulticastGroupAPI) AddDevice(ctx context.Context, req *pb.AddDeviceToMu
 
 	err = storage.CreateRemoteMulticastSetup(ctx, storage.DB(), &rms)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Unknown, "create remote multicast setup error: %s", err)
+		return grpc.Errorf(codes.Unknown, "create remote multicast setup error: %s", err)
 	}
 
-	return &empty.Empty{}, nil
+	return nil
 }
 
 // RemoveDevice removes the given device from the multicast-group.

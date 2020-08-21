@@ -106,12 +106,12 @@ class MulticastGroupStore extends EventEmitter {
     });
   }
 
-  addDevice(multicastGroupID, devEUI, callbackFunc) {
+  addDevice(multicastGroupID, devEUIs, callbackFunc) {
     this.swagger.then(client => {
       client.apis.MulticastGroupService.AddDevice({
         multicast_group_id: multicastGroupID,
         body: {
-          devEUI: devEUI,
+          devEUIS: devEUIs,
         },
       })
       .then(checkStatus)
@@ -120,6 +120,24 @@ class MulticastGroupStore extends EventEmitter {
         callbackFunc(resp.obj);
       })
       .catch(errorHandler);
+    });
+  }
+
+  addApplicationDevice(multicastGroupID, applicationID, excludeDevEUIS, callbackFunc) {
+    this.swagger.then(client => {
+      client.apis.MulticastGroupService.AddApplicationDevice({
+        multicast_group_id: multicastGroupID,
+        body: {
+          "applicationID": applicationID,
+          "excludeDevEUIS": excludeDevEUIS
+        },
+      })
+        .then(checkStatus)
+        .then(resp => {
+          this.notifyApplication("added to");
+          callbackFunc(resp.obj);
+        })
+        .catch(errorHandler);
     });
   }
 
@@ -154,6 +172,16 @@ class MulticastGroupStore extends EventEmitter {
       notification: {
         type: "success",
         message: "device has been " + action + " multicast-group",
+      },
+    });
+  }
+
+  notifyApplication(action) {
+    dispatcher.dispatch({
+      type: "CREATE_NOTIFICATION",
+      notification: {
+        type: "success",
+        message: "devices in application has been " + action + " multicast-group",
       },
     });
   }
