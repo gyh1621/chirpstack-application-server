@@ -67,7 +67,7 @@ class ListFUOTADeploymentsForDevice extends Component {
         key={obj.id}
         hover
       >
-        <TableCellLink to={`/organizations/${this.props.match.params.organizationID}/applications/${this.props.match.params.applicationID}/fuota-deployments/${obj.id}`}>{obj.name}</TableCellLink>
+        <TableCellLink to={`/organizations/${this.props.match.params.organizationID}/fuota-deployments/${obj.id}`}>{obj.name}</TableCellLink>
         <TableCell>{createdAt}</TableCell>
         <TableCell>{updatedAt}</TableCell>
         <TableCell>{obj.state}</TableCell>

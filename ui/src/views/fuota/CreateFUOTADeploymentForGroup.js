@@ -19,7 +19,7 @@ const styles = {
 };
 
 
-class CreateFUOTADeploymentForDevice extends Component {
+class CreateFUOTADeploymentForGroup extends Component {
   constructor() {
     super();
     this.state = {};
@@ -27,7 +27,7 @@ class CreateFUOTADeploymentForDevice extends Component {
   }
 
   onSubmit(fuotaDeployment) {
-    FUOTADeploymentStore.createForDevice(fuotaDeployment.devEUI, fuotaDeployment, resp => {
+    FUOTADeploymentStore.createForGroup(fuotaDeployment.mcGroupID, fuotaDeployment, resp => {
       this.props.history.push(`/organizations/${this.props.match.params.organizationID}/fuota-deployments`);
     });
   }
@@ -39,14 +39,14 @@ class CreateFUOTADeploymentForDevice extends Component {
           <TitleBarTitle title="FUOTA"
                          to={`/organizations/${this.props.match.params.organizationID}/fuota-deployments`}/>
           <TitleBarTitle title="/"/>
-          <TitleBarTitle title="Create update job for device"/>
+          <TitleBarTitle title="Create update job for multicast group"/>
         </TitleBar>
 
         <Grid item xs={12}>
           <Card className={this.props.classes.card}>
             <CardContent>
               <FUOTADeploymentForm
-                type={"device"}
+                type={"group"}
                 submitLabel="Create FUOTA deployment"
                 onSubmit={this.onSubmit}
                 props={this.props}
@@ -59,5 +59,5 @@ class CreateFUOTADeploymentForDevice extends Component {
   }
 }
 
-export default withStyles(styles)(withRouter(CreateFUOTADeploymentForDevice));
+export default withStyles(styles)(withRouter(CreateFUOTADeploymentForGroup));
 

@@ -77,7 +77,10 @@ import Search from "./views/search/Search";
 
 // FUOTA
 import CreateFUOTADeploymentForDevice from "./views/fuota/CreateFUOTADeploymentForDevice";
+import CreateFUOTADeploymentForGroup from "./views/fuota/CreateFUOTADeploymentForGroup";
+import CreateFUOTADeploymentForDeviceInApplication from "./views/fuota/CreateFUOTADeploymentForDeviceInApplication";
 import FUOTADeploymentLayout from "./views/fuota/FUOTADeploymentLayout";
+import ListFUOTADeployments from "./views/fuota/ListFUOTADeployments";
 
 // API Keys
 import ListAdminAPIKeys from "./views/api-keys/ListAdminAPIKeys";
@@ -204,10 +207,14 @@ class App extends Component {
                     <Route exact path="/organizations/:organizationID(\d+)/applications" component={ListApplications} />
                     <Route exact path="/organizations/:organizationID(\d+)/applications/create" component={CreateApplication} />
                     <Route exact path="/organizations/:organizationID(\d+)/applications/:applicationID(\d+)/devices/create" component={CreateDevice} />
-                    <Route exact path="/organizations/:organizationID(\d+)/applications/:applicationID(\d+)/devices/:devEUI([\w]{16})/fuota-deployments/create" component={CreateFUOTADeploymentForDevice} />
-                    <Route path="/organizations/:organizationID(\d+)/applications/:applicationID(\d+)/fuota-deployments/:fuotaDeploymentID([\w-]{36})" component={FUOTADeploymentLayout} />
+                    <Route exact path="/organizations/:organizationID(\d+)/applications/:applicationID(\d+)/devices/:devEUI([\w]{16})/fuota-deployments/create" component={CreateFUOTADeploymentForDeviceInApplication} />
                     <Route path="/organizations/:organizationID(\d+)/applications/:applicationID(\d+)/devices/:devEUI([\w]{16})" component={DeviceLayout} />
                     <Route path="/organizations/:organizationID(\d+)/applications/:applicationID(\d+)" component={ApplicationLayout} />
+
+                    <Route exact path="/organizations/:organizationID(\d+)/fuota-deployments" component={ListFUOTADeployments} />
+                    <Route path="/organizations/:organizationID(\d+)/fuota-deployments/:fuotaDeploymentID([\w-]{36})" component={FUOTADeploymentLayout} />
+                    <Route exact path="/organizations/:organizationID(\d+)/fuota-deployments/create-for-group" component={CreateFUOTADeploymentForGroup} />
+                    <Route exact path="/organizations/:organizationID(\d+)/fuota-deployments/create-for-device" component={CreateFUOTADeploymentForDevice} />
 
                     <Route exact path="/organizations/:organizationID(\d+)/multicast-groups" component={ListMulticastGroups} />
                     <Route exact path="/organizations/:organizationID(\d+)/multicast-groups/create" component={CreateMulticastGroup} />

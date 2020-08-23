@@ -1,16 +1,17 @@
 import React from "react";
-
-import { withStyles } from "@material-ui/core/styles";
 import TextField from '@material-ui/core/TextField';
 import FormControl from "@material-ui/core/FormControl";
 import FormLabel from "@material-ui/core/FormLabel";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import Button from "@material-ui/core/Button";
+import {withStyles} from "@material-ui/core/styles";
 
 import FormComponent from "../../classes/FormComponent";
 import Form from "../../components/Form";
 import DurationField from "../../components/DurationField";
 import AutocompleteSelect from "../../components/AutocompleteSelect";
+import multicastGroupStore from "../../stores/MulticastGroupStore";
+import DeviceStore from "../../stores/DeviceStore";
 
 const styles = {
   formLabel: {
@@ -25,6 +26,8 @@ class FUOTADeploymentForm extends FormComponent {
     this.state.file = null;
 
     this.onFileChange = this.onFileChange.bind(this);
+    this.getMcGroupOptions = this.getMcGroupOptions.bind(this);
+    this.getDeviceOptions = this.getDeviceOptions.bind(this);
   }
 
   getGroupTypeOptions(search, callbackFunc) {
@@ -85,6 +88,24 @@ class FUOTADeploymentForm extends FormComponent {
     }
   }
 
+  getMcGroupOptions(search, callbackFunc) {
+    multicastGroupStore.list(search, this.props.organizationID, "", "", 10, 0, resp => {
+      const options = resp.result.map((a, i) => {
+        return {label: `${a.name} (${a.id})`, value: a.id}
+      });
+      callbackFunc(options);
+    });
+  }
+
+  getDeviceOptions(search, callbackFunc) {
+    DeviceStore.list({search: search, limit: 10, offset: 0}, resp => {
+      const options = resp.result.map((a, i) => {
+        return {label: `${a.name} (${a.devEUI})`, value: a.devEUI}
+      });
+      callbackFunc(options);
+    })
+  }
+
   render() {
     if (this.state.object === undefined) {
       return null;
@@ -97,11 +118,50 @@ class FUOTADeploymentForm extends FormComponent {
       fileLabel = "Select file..."
     }
 
-    return(
+    let deviceFieldstyle = {};
+    if (this.props.type === "group") {
+      deviceFieldstyle = {display: "none"};
+    }
+    let selectDeviceStyle = {display: "none"};
+    console.log(this.state);
+    if (this.props.type === "device" && this.props.devEUI === undefined) {
+      selectDeviceStyle = {};
+    }
+
+    let groupFieldStyle = {};
+    if (this.props.type === "device") {
+      groupFieldStyle = {display: "none"};
+    }
+
+    console.log(this.props);
+
+    return (
       <Form
         submitLabel={this.props.submitLabel}
         onSubmit={this.onSubmit}
       >
+        <FormControl fullWidth margin="normal" style={selectDeviceStyle}>
+          <FormLabel className={this.props.classes.formLabel} required>Select device</FormLabel>
+          <AutocompleteSelect
+            id="devEUI"
+            label="Select device"
+            onChange={this.onChange}
+            getOptions={this.getDeviceOptions}
+            margin="none"
+          />
+        </FormControl>
+
+        <FormControl fullWidth margin="normal" style={groupFieldStyle}>
+          <FormLabel className={this.props.classes.formLabel} required>Select multicast group</FormLabel>
+          <AutocompleteSelect
+            id="mcGroupID"
+            label="Select Multicast Group"
+            onChange={this.onChange}
+            getOptions={this.getMcGroupOptions}
+            margin="none"
+          />
+        </FormControl>
+
         <TextField
           id="name"
           label="Firmware update job-name"
@@ -117,10 +177,11 @@ class FUOTADeploymentForm extends FormComponent {
           <FormLabel className={this.props.classes.formLabel} required>Select firmware file</FormLabel>
           <Button component="label">
             {fileLabel}
-            <input type="file" style={{display: "none"}} onChange={this.onFileChange} />
+            <input type="file" style={{display: "none"}} onChange={this.onFileChange}/>
           </Button>
           <FormHelperText>
-            This file will fragmented and sent to the device(s). Please note that the format of this file is vendor dependent.
+            This file will fragmented and sent to the device(s). Please note that the format of this file is vendor
+            dependent.
           </FormHelperText>
         </FormControl>
 
@@ -145,6 +206,7 @@ class FUOTADeploymentForm extends FormComponent {
         />
 
         <TextField
+          style={deviceFieldstyle}
           id="dr"
           label="Data-rate"
           helperText="The data-rate to use when transmitting the multicast frames. Please refer to the LoRaWAN Regional Parameters specification for valid values."
@@ -157,6 +219,7 @@ class FUOTADeploymentForm extends FormComponent {
         />
 
         <TextField
+          style={deviceFieldstyle}
           id="frequency"
           label="Frequency (Hz)"
           helperText="The frequency to use when transmitting the multicast frames. Please refer to the LoRaWAN Regional Parameters specification for valid values."
@@ -196,11 +259,11 @@ class FUOTADeploymentForm extends FormComponent {
         <FormControl fullWidth margin="normal">
           <FormLabel className={this.props.classes.formLabel} required>Encoding Algorithm</FormLabel>
           <AutocompleteSelect
-              id="fragAlgo"
-              label="Encoding Algorithm"
-              value={this.state.object.fragAlgo || 7}
-              onChange={this.onChange}
-              getOptions={this.getFragAlgoOptions}
+            id="fragAlgo"
+            label="Encoding Algorithm"
+            value={this.state.object.fragAlgo || ""}
+            onChange={this.onChange}
+            getOptions={this.getFragAlgoOptions}
           />
           <FormHelperText>
             The encoding algorithm to use.
@@ -209,6 +272,7 @@ class FUOTADeploymentForm extends FormComponent {
 
       </Form>
     );
+
   }
 }
 

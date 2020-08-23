@@ -44,7 +44,7 @@ func (f *FUOTADeploymentAPI) CreateForGroup(ctx context.Context, req *pb.CreateF
 	}
 
 	// Get org id
-	mg, err := storage.GetMulticastGroup(ctx, storage.DB(), mgID, false, true)
+	mg, err := storage.GetMulticastGroup(ctx, storage.DB(), mgID, false, false)
 	if err != nil {
 		return nil, helpers.ErrToRPCError(err)
 	}
@@ -140,8 +140,8 @@ func (f *FUOTADeploymentAPI) CreateForGroup(ctx context.Context, req *pb.CreateF
 	// Create FUOTA Deployment
 	fd := storage.FUOTADeployment{
 		Name:                req.FuotaDeployment.Name,
-		DR:                  int(req.FuotaDeployment.Dr),
-		Frequency:           int(req.FuotaDeployment.Frequency),
+		DR:                  int(mg.MulticastGroup.Dr),
+		Frequency:           int(mg.MulticastGroup.Frequency),
 		Payload:             req.FuotaDeployment.Payload,
 		FragSize:            maxPLSize.N - 3,
 		Redundancy:          int(req.FuotaDeployment.Redundancy),
@@ -558,6 +558,7 @@ func (f *FUOTADeploymentAPI) returnList(count int, deployments []storage.FUOTADe
 			Id:    fd.ID.String(),
 			Name:  fd.Name,
 			State: string(fd.State),
+			Type:  fd.Type,
 		}
 
 		item.CreatedAt, err = ptypes.TimestampProto(fd.CreatedAt)

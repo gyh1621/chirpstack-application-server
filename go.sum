@@ -192,8 +192,8 @@ github.com/grpc-ecosystem/grpc-gateway v1.11.3 h1:h8+NsYENhxNTuq+dobk3+ODoJtwY4F
 github.com/grpc-ecosystem/grpc-gateway v1.11.3/go.mod h1:vNeuVxBJEsws4ogUvrchl83t/GYV9WGTSLVdBhOQFDY=
 github.com/grpc-ecosystem/grpc-gateway v1.12.1 h1:zCy2xE9ablevUOrUZc3Dl72Dt+ya2FNAvC2yLYMHzi4=
 github.com/grpc-ecosystem/grpc-gateway v1.12.1/go.mod h1:8XEsbTttt/W+VvjtQhLACqCisSPWTxCZ7sBRjU6iH9c=
-github.com/gyh1621/chirpstack-api/go/v3 v3.7.8 h1:+WGcMSxTRm0uCP3mDpvgvXIvsupk/yUHktoQYVzrLiA=
-github.com/gyh1621/chirpstack-api/go/v3 v3.7.8/go.mod h1:dQfbPJGZsNPkVFlomQMP53A3lgwmZHJ7oGvJlZeYZj8=
+github.com/gyh1621/chirpstack-api/go/v3 v3.7.9 h1:2InNgWwwXNOxltfUzQLPuGNCm4atJgj0mxRArHoK6wc=
+github.com/gyh1621/chirpstack-api/go/v3 v3.7.9/go.mod h1:dQfbPJGZsNPkVFlomQMP53A3lgwmZHJ7oGvJlZeYZj8=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/go-multierror v1.0.0/go.mod h1:dHtQlpGsu+cZNNAkkCN/P3hoUDHhCYQXV3UM06sGGrk=
 github.com/hashicorp/golang-lru v0.5.0 h1:CL2msUPvZTLb5O648aiLNJw3hnBxN2+1Jq8rCOH9wdo=

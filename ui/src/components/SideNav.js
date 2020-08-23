@@ -1,7 +1,7 @@
-import React, { Component } from "react";
-import { Link, withRouter } from "react-router-dom";
+import React, {Component} from "react";
+import {Link, withRouter} from "react-router-dom";
 
-import { withStyles } from "@material-ui/core/styles";
+import {withStyles} from "@material-ui/core/styles";
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -17,6 +17,7 @@ import RadioTower from "mdi-material-ui/RadioTower";
 import Tune from "mdi-material-ui/Tune";
 import Cog from "mdi-material-ui/Cog";
 import Rss from "mdi-material-ui/Rss";
+import CloudUpload from "mdi-material-ui/CloudUpload";
 import AccountDetails from "mdi-material-ui/AccountDetails";
 import KeyVariant from "mdi-material-ui/KeyVariant";
 
@@ -138,7 +139,9 @@ class SideNav extends Component {
 
   getOrganizationOptions(search, callbackFunc) {
     OrganizationStore.list(search, 10, 0, resp => {
-      const options = resp.result.map((o, i) => {return {label: o.name, value: o.id}});
+      const options = resp.result.map((o, i) => {
+        return {label: o.name, value: o.id}
+      });
       callbackFunc(options);
     });
   }
@@ -149,7 +152,7 @@ class SideNav extends Component {
       organizationID = this.state.organization.id;
     }
 
-    return(
+    return (
       <Drawer
         variant="persistent"
         anchor="left"
@@ -160,36 +163,36 @@ class SideNav extends Component {
           <List>
             <ListItem button component={Link} to="/network-servers">
               <ListItemIcon>
-                <Server />
+                <Server/>
               </ListItemIcon>
-              <ListItemText primary="Network-servers" />
+              <ListItemText primary="Network-servers"/>
             </ListItem>
             <ListItem button component={Link} to="/gateway-profiles">
               <ListItemIcon>
-                <RadioTower />
+                <RadioTower/>
               </ListItemIcon>
-              <ListItemText primary="Gateway-profiles" />
+              <ListItemText primary="Gateway-profiles"/>
             </ListItem>
             <ListItem button component={Link} to="/organizations">
-            <ListItemIcon>
-                <Domain />
+              <ListItemIcon>
+                <Domain/>
               </ListItemIcon>
-              <ListItemText primary="Organizations" />
+              <ListItemText primary="Organizations"/>
             </ListItem>
             <ListItem button component={Link} to="/users">
               <ListItemIcon>
-                <Account />
+                <Account/>
               </ListItemIcon>
-              <ListItemText primary="All users" />
+              <ListItemText primary="All users"/>
             </ListItem>
             <ListItem button component={Link} to="/api-keys">
               <ListItemIcon>
-                <KeyVariant />
+                <KeyVariant/>
               </ListItemIcon>
-              <ListItemText primary="API keys" />
+              <ListItemText primary="API keys"/>
             </ListItem>
           </List>
-          <Divider />
+          <Divider/>
         </Admin>
 
         <div>
@@ -209,54 +212,61 @@ class SideNav extends Component {
           <Admin>
             <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/edit`}>
               <ListItemIcon>
-                <Cog />
+                <Cog/>
               </ListItemIcon>
-              <ListItemText primary="Org. settings" />
+              <ListItemText primary="Org. settings"/>
             </ListItem>
           </Admin>
           <Admin organizationID={this.state.organization.id}>
             <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/users`}>
               <ListItemIcon>
-                <Account />
+                <Account/>
               </ListItemIcon>
-              <ListItemText primary="Org. users" />
+              <ListItemText primary="Org. users"/>
             </ListItem>
             <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/api-keys`}>
               <ListItemIcon>
-                <KeyVariant />
+                <KeyVariant/>
               </ListItemIcon>
-              <ListItemText primary="Org. API keys" />
+              <ListItemText primary="Org. API keys"/>
             </ListItem>
           </Admin>
           <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/service-profiles`}>
             <ListItemIcon>
-              <AccountDetails />
+              <AccountDetails/>
             </ListItemIcon>
-            <ListItemText primary="Service-profiles" />
+            <ListItemText primary="Service-profiles"/>
           </ListItem>
           <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/device-profiles`}>
             <ListItemIcon>
-              <Tune />
+              <Tune/>
             </ListItemIcon>
-            <ListItemText primary="Device-profiles" />
+            <ListItemText primary="Device-profiles"/>
           </ListItem>
-          {this.state.organization.canHaveGateways && <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/gateways`}>
+          {this.state.organization.canHaveGateways &&
+          <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/gateways`}>
             <ListItemIcon>
-              <RadioTower />
+              <RadioTower/>
             </ListItemIcon>
-            <ListItemText primary="Gateways" />
+            <ListItemText primary="Gateways"/>
           </ListItem>}
           <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/applications`}>
             <ListItemIcon>
-              <Apps />
+              <Apps/>
             </ListItemIcon>
-            <ListItemText primary="Applications" />
+            <ListItemText primary="Applications"/>
           </ListItem>
           <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/multicast-groups`}>
             <ListItemIcon>
-              <Rss />
+              <Rss/>
             </ListItemIcon>
-            <ListItemText primary="Multicast-groups" />
+            <ListItemText primary="Multicast-groups"/>
+          </ListItem>
+          <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/fuota-deployments`}>
+            <ListItemIcon>
+              <CloudUpload/>
+            </ListItemIcon>
+            <ListItemText primary="FUOTA"/>
           </ListItem>
         </List>}
       </Drawer>

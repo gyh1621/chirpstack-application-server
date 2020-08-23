@@ -7,7 +7,6 @@ import FormLabel from "@material-ui/core/FormLabel";
 import FormHelperText from "@material-ui/core/FormHelperText";
 
 import FormComponent from "../../classes/FormComponent";
-import AESKeyField from "../../components/AESKeyField";
 import DevAddrField from "../../components/DevAddrField";
 import Form from "../../components/Form";
 import AutocompleteSelect from "../../components/AutocompleteSelect";

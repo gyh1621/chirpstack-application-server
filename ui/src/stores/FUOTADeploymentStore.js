@@ -30,6 +30,23 @@ class FUOTADeploymentStore extends EventEmitter {
     });
   }
 
+  createForGroup(mcGroupID, fuotaDeployment, callbackFunc) {
+    this.swagger.then(client => {
+      client.apis.FUOTADeploymentService.CreateForGroup({
+        mc_group_id: mcGroupID,
+        body: {
+          fuotaDeployment: fuotaDeployment,
+        },
+      })
+        .then(checkStatus)
+        .then(resp => {
+          this.notify("created");
+          callbackFunc(resp.obj);
+        })
+        .catch(errorHandler);
+    });
+  }
+
   get(id, callbackFunc) {
     this.swagger.then(client => {
       client.apis.FUOTADeploymentService.Get({

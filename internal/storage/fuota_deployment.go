@@ -91,6 +91,7 @@ type FUOTADeploymentListItem struct {
 	Name          string               `db:"name"`
 	State         FUOTADeploymentState `db:"state"`
 	NextStepAfter time.Time            `db:"next_step_after"`
+	Type          string               `db:"type"`
 }
 
 // FUOTADeploymentDevice defines the device record of a FUOTA deployment.
@@ -545,7 +546,8 @@ func GetFUOTADeployments(ctx context.Context, db sqlx.Queryer, filters FUOTADepl
 			fd.updated_at,
 			fd.name,
 			fd.state,
-			fd.next_step_after
+			fd.next_step_after,
+			fd.type
 		from
 			fuota_deployment fd
 		inner join
