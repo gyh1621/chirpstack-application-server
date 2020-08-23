@@ -256,13 +256,13 @@ class SideNav extends Component {
             </ListItemIcon>
             <ListItemText primary="Applications"/>
           </ListItem>
-          <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/multicast-groups`}>
+          <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/multicast-groups`} style={{background: "lightblue"}}>
             <ListItemIcon>
               <Rss/>
             </ListItemIcon>
             <ListItemText primary="Multicast-groups"/>
           </ListItem>
-          <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/fuota-deployments`}>
+          <ListItem button component={Link} to={`/organizations/${this.state.organization.id}/fuota-deployments`} style={{background: "lightblue"}}>
             <ListItemIcon>
               <CloudUpload/>
             </ListItemIcon>
