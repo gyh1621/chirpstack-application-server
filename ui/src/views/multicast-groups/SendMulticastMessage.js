@@ -31,6 +31,13 @@ class SendMulticastMessageForm extends FormComponent {
         onSubmit={this.onSubmit}
       >
         <TextField
+          id="fPort"
+          label="FPort"
+          margin="normal"
+          onChange={this.onChange}
+          required
+        />
+        <TextField
           id="message"
           label="Multicast Message"
           margin="normal"
@@ -39,7 +46,6 @@ class SendMulticastMessageForm extends FormComponent {
           rows={2}
           required
           onChange={this.onChange}
-          variant="outlined"
         />
       </Form>
     );
@@ -56,7 +62,7 @@ class SendMulticastMessage extends Component {
     const multicastGroupQueueItem = {
       multicastQueueItem: {
         data: btoa(message.message),
-        fPort: 200,
+        fPort: message.fPort,
       },
     };
     MulticastGroupStore.sendMessage(this.props.multicastGroup, multicastGroupQueueItem, resp => {
